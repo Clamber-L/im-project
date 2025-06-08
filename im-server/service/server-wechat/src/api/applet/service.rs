@@ -1,0 +1,175 @@
+use crate::api::applet::entity::{
+    AppletLoginParam, UserCreationParam, UserLoginResponse, UserPayParam,
+};
+use crate::core::service::wechat_api::{access_token, get_user_phone, user_by_code};
+use crate::core::AppState;
+use axum::extract::State;
+use axum::Json;
+use lib_core::{
+    generate_jwt, generate_snowflake_id, ApiResult, ExtractJson, ExtractQuery, JwtUser,
+};
+use lib_entity::mysql::prelude::{AppletUser, AppletUserCreation};
+use lib_entity::mysql::{applet_pay_centre_record, applet_user, applet_user_creation};
+use lib_utils::request_entity::PageResult;
+use lib_utils::{error_result, ok_result, ok_result_with_none};
+use sea_orm::prelude::Expr;
+use sea_orm::sqlx::types::chrono::Utc;
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
+use tracing::error;
+
+pub async fn login(
+    State(state): State<AppState>,
+    ExtractJson(param): ExtractJson<AppletLoginParam>,
+) -> ApiResult<UserLoginResponse> {
+    println!("param:{:?}", param);
+    let redis_service = &state.redis_service;
+
+    // 获取openid
+    let res = user_by_code(
+        &state.request_client,
+        param.code.clone(),
+        state.applet_config.app_id.clone(),
+        state.applet_config.secret.clone(),
+    )
+    .await?;
+    if res.openid.is_none() {
+        return Ok(error_result("登录失败，请稍后再试"));
+    }
+
+    println!("res:{:?}", res);
+    // 根据openid判断是否为新用户
+    let applet_user_option = AppletUser::find()
+        .filter(Expr::col(applet_user::Column::OpenId).eq(res.openid.clone().unwrap()))
+        .one(&state.mysql_client)
+        .await?;
+
+    if let None = applet_user_option {
+        // 新用户
+        // 1.获取access_token
+        let access_token = access_token(
+            &state.request_client,
+            redis_service,
+            state.applet_config.app_id.clone(),
+            state.applet_config.secret.clone(),
+        )
+        .await?;
+
+        // 2.获取手机号码
+        let user_phone_result =
+            get_user_phone(&state.request_client, param.phone_code, access_token).await?;
+        if user_phone_result.is_some() {
+            let user_phone = user_phone_result.unwrap();
+            let id = generate_snowflake_id()?;
+            let user = applet_user::ActiveModel {
+                id: Set(id.clone()),
+                username: Set(format!("微信用户{}", user_phone)),
+                open_id: Set(res.openid.unwrap()),
+                phone: Set(user_phone),
+                avatar: Set(
+                    "https://jmzbase.oss-cn-beijing.aliyuncs.com/vs4f2vx8rumjkww9wjrc.jpg"
+                        .to_string(),
+                ),
+                created_time: Set(Some(Utc::now().naive_utc())),
+                updated_time: Set(Some(Utc::now().naive_utc())),
+            }
+            .insert(&state.mysql_client)
+            .await?;
+            let token = generate_jwt(JwtUser { id });
+            Ok(ok_result(UserLoginResponse::new(token, user)))
+        } else {
+            println!("获取用户信息失败");
+            println!("user_phone_result:{:?}", user_phone_result.unwrap());
+            Ok(error_result("获取用户信息失败，请稍后再试"))
+        }
+    } else {
+        let model = applet_user_option.unwrap();
+        let token = generate_jwt(JwtUser {
+            id: model.clone().id,
+        });
+        Ok(ok_result(UserLoginResponse::new(token, model)))
+    }
+}
+
+pub async fn update_user(
+    State(state): State<AppState>,
+    user: JwtUser,
+    ExtractJson(param): ExtractJson<UserLoginResponse>,
+) -> ApiResult<UserLoginResponse> {
+    println!("user:{:?}", user);
+    println!("params:{:?}", param);
+    let user_option = AppletUser::find_by_id(param.user_id)
+        .one(&state.mysql_client)
+        .await?;
+    if let Some(user) = user_option {
+        let mut active_user: applet_user::ActiveModel = user.into();
+        active_user.avatar = Set(param.avatar);
+        active_user.username = Set(param.username);
+        active_user.updated_time = Set(Some(Utc::now().naive_utc()));
+        let applet_user = active_user.update(&state.mysql_client).await?;
+        return Ok(ok_result(UserLoginResponse::new(param.token, applet_user)));
+    };
+    Ok(error_result("操作失败，请稍后再试"))
+}
+
+pub async fn creation_list(
+    State(state): State<AppState>,
+    ExtractQuery(param): ExtractQuery<UserCreationParam>,
+) -> ApiResult<PageResult<applet_user_creation::Model>> {
+    println!("param:{:?}", param);
+    let paginate = AppletUserCreation::find()
+        .order_by_asc(applet_user_creation::Column::Id)
+        .paginate(&state.mysql_client, param.page_size);
+    let items_and_pages_number = paginate.num_items_and_pages().await?;
+
+    let items = paginate.fetch_page(param.page_num - 1).await?;
+    let page_result = PageResult::new(
+        param.page_num,
+        param.page_size,
+        items_and_pages_number,
+        items,
+    );
+    Ok(ok_result(page_result))
+}
+
+pub async fn pay(
+    State(state): State<AppState>,
+    user: JwtUser,
+    Json(param): Json<UserPayParam>,
+) -> ApiResult<String> {
+    // 获取用户openid
+    let res = user_by_code(
+        &state.request_client,
+        param.code.clone(),
+        state.applet_config.app_id.clone(),
+        state.applet_config.secret.clone(),
+    )
+    .await?;
+    if res.openid.is_none() {
+        return Ok(error_result("支付发生错误，请稍后再试!"));
+    }
+    let openid = res.openid.unwrap();
+
+    // 获取用户信息
+    let applet_user = AppletUser::find()
+        .filter(Expr::col(applet_user::Column::OpenId).is(&openid))
+        .one(&state.mysql_client)
+        .await?;
+    if applet_user.is_none() {
+        error!("支付时遇到位置的用户信息:{:?}", openid);
+        return Ok(error_result("支付发生错误，请稍后再试!"));
+    }
+
+    let applet_user = applet_user.unwrap();
+
+    // 生成支付中间表
+    let record = applet_pay_centre_record::ActiveModel {
+        id: Set(generate_snowflake_id()?),
+        user_id: Set(user.id),
+        group_buy_id: Set(param.group_buy_id),
+        created_time: Set(Some(Utc::now().naive_local())),
+        updated_time: Set(Some(Utc::now().naive_local())),
+    };
+    record.insert(&state.mysql_client).await?;
+    Ok(ok_result_with_none())
+}

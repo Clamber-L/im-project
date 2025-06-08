@@ -1,0 +1,2 @@
+pub const WECHAT_ACCESS_TOKEN: &str = "WECHAT_ACCESS_TOKEN:";
+pub const WECHAT_TICKET: &str = "WECHAT_TICKET:";

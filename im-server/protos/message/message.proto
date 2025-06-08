@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package message;
+
+message Message {
+    string userId = 1;
+    string toUserId = 2;
+    string chatId = 3;
+    string content = 4;
+    int32 contentType = 5;
+}
+
+message SendMessageResponse {
+    uint64 sendTime = 1;
+    bool result = 2;
+}
+
+service MessageService {
+    rpc SendMessage(Message) returns (SendMessageResponse) {}
+}

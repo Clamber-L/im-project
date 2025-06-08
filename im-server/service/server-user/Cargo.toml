@@ -1,0 +1,22 @@
+[package]
+name = "server-user"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lib-utils = { workspace = true }
+lib-entity = { workspace = true }
+lib-core = { workspace = true }
+lib-rpc = { workspace = true }
+
+tonic = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+sea-orm = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tower-http = { workspace = true }
+axum-extra = { workspace = true }
+sonyflake = { workspace = true }

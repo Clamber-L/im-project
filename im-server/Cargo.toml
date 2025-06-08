@@ -1,0 +1,129 @@
+[workspace]
+resolver = "2"
+members = [
+    "creates/lib-core",
+    "creates/lib-entity",
+    "creates/lib-rpc",
+    "creates/lib-utils",
+    "service/chat-server",
+    "service/server-auth",
+    "service/server-message",
+    "service/server-user",
+    "service/rust-cli",
+    "service/net-server",
+    "service/server-wechat",
+]
+
+[profile.dev]
+opt-level = 0
+split-debuginfo = "off"
+
+[profile.release]
+opt-level = 3
+debug = true
+lto = true
+
+[workspace.dependencies]
+# project workspace
+lib-core = { path = "creates/lib-core" }
+lib-entity = { path = "creates/lib-entity" }
+lib-rpc = { path = "creates/lib-rpc" }
+lib-utils = { path = "creates/lib-utils" }
+
+# error handler
+anyhow = "1.0.93"
+thiserror = "2.0.3"
+
+# serialize and deserialize
+serde = { version = "1.0.215", features = ["derive"] }
+serde_yaml = "0.9.33"
+serde_json = "1.0.133"
+toml = "0.8.13"
+
+# web
+axum = { version = "0.8.1", features = [
+    "http2",
+    "query",
+    "tracing",
+    "ws",
+    "macros",
+    "multipart"
+] }
+tower-http = { version = "0.6.2", features = ["cors"] }
+axum-extra = "0.10.0"
+
+# orm
+sea-orm = { version = "1.1.1", features = [
+    "sqlx-mysql",
+    "runtime-tokio-native-tls",
+    "macros",
+] }
+ts-bind = "0.1.7"
+
+# async runtime
+tokio = { version = "1.41.1", features = ["rt", "rt-multi-thread", "macros"] }
+futures = "0.3.31"
+futures-util = "0.3.31"
+tokio-tungstenite = "0.26.1"
+tokio-util = "0.7.12"
+
+# mongodb
+mongodb = { version = "3.1.0" }
+bson = { version = "2.13.0", features = ["serde_with", "chrono-0_4"] }
+
+# redis
+redis = { version = "0.25", features = ["tokio-comp", "tokio-native-tls-comp"] }
+
+# grpc
+tonic-web = "0.12.1"
+tonic-build = "0.12.1"
+tonic = { version = "0.12.1", features = ["zstd", "default", "router"] }
+prost-build = "0.13.3"
+prost = "0.13.3"
+prost-types = "0.13.3"
+
+# log
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+
+# nacos
+nacos-sdk = { version = "0.4.2", features = ["default"] }
+
+# cli
+clap = { version = "4.5.4", features = ["derive"] }
+dialoguer = { version = "0.11.0", features = ["default", "history"] }
+
+# wechat
+wechat-pay-rust-sdk = "0.2.18"
+
+# oss
+aliyun-oss-rust-sdk = "0.2.1"
+
+# utils
+chrono = { version = "0.4.38", features = ["serde"] }
+dashmap = "6.1.0"
+derive_builder = "0.20.2"
+reqwest = { version = "0.12.5", default-features = false, features = [
+    "json",
+    "default",
+    "rustls-tls",
+    "gzip",
+    "blocking",
+] }
+csv = "1.3.0"
+image = "0.25.5"
+lazy_static = "1.5.0"
+jwt = "0.16.0"
+sonyflake = "0.3"
+hmac = "0.12.1"
+sha2 = "0.10.8"
+hex = "0.4.3"
+sha1 = "0.10.6"
+bytes = "1.9.0"
+argon2 = "0.5.3"
+rand = "0.9.0"
+uuid = { version = "1.17.0", features = ["v4"] }
+
+# ssl
+openssl-sys = "0.9"
+openssl = { version = "0.10.33", features = ["vendored"] }

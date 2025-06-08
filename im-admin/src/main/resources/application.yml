@@ -1,0 +1,51 @@
+server:
+  port: 9600
+spring:
+  application:
+    name: im-admin
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://47.95.179.146:3306/im-project
+    username: root
+    password: Lsw@0516
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      database: 0
+  kafka:
+    bootstrap-servers: 192.168.0.25:9093
+    consumer:
+      enable-auto-commit: false  # 禁用自动提交
+      auto-offset-reset: earliest  # 从最早的消息开始消费
+      concurrency: 2 #设置消费线程数
+      session:
+        timeout: 6000
+    producer:
+      acks: all  # 确保消息在所有副本同步后才返回成功
+      retries: 3  # 最大重试次数
+    listener:
+      missing-topics-fatal: false
+      ack-mode: manual  # 手动确认消费
+    dead-letter-topic:
+      enabled: true
+      topic: my_topic-DLT  # 死信队列的主题名称
+mybatis-plus:
+  mapper-locations: classpath:/mappers/**.xml
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    groups-order: DESC
+    operationsSorter: method
+    disable-swagger-default-url: true
+  group-configs:
+    - group: admin
+      paths-to-match: '/**'
+      packages-to-scan: com.carlos.admin
+  default-flat-param-object: true

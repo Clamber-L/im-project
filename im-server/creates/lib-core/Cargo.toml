@@ -1,0 +1,29 @@
+[package]
+name = "lib-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mongodb = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+sea-orm = { workspace = true }
+lib-utils = { workspace = true }
+axum = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+nacos-sdk = { workspace = true }
+derive_builder = { workspace = true }
+hmac = { workspace = true }
+jwt = { workspace = true }
+sha2 = { workspace = true }
+sonyflake = { workspace = true }
+dashmap = { workspace = true }
+lazy_static = { workspace = true }
+reqwest = { workspace = true }
+redis = { workspace = true }
+tokio = { workspace = true }
+wechat-pay-rust-sdk = { workspace = true }
+aliyun-oss-rust-sdk = { workspace = true }

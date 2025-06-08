@@ -1,0 +1,27 @@
+[package]
+name = "server-wechat"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lib-core = { workspace = true }
+lib-utils = { workspace = true }
+lib-entity = { workspace = true }
+
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+reqwest = { workspace = true }
+sea-orm = { workspace = true }
+anyhow = { workspace = true }
+serde_yaml = { workspace = true }
+serde_json = { workspace = true }
+rand = { workspace = true }
+sha1 = { workspace = true }
+hex = { workspace = true }
+tower-http = { workspace = true }
+wechat-pay-rust-sdk = { workspace = true }
+aliyun-oss-rust-sdk = { workspace = true }
+uuid = { workspace = true }
