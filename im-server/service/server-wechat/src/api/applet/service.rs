@@ -1,5 +1,6 @@
 use crate::api::applet::entity::{
-    AppletLoginParam, UserCreationParam, UserLoginResponse, UserPayParam,
+    AppletLoginParam, OperationResponse, UserCreationParam, UserLoginResponse, UserPayParam,
+    UserTeamParam,
 };
 use crate::core::service::wechat_api::{access_token, get_user_phone, user_by_code};
 use crate::core::AppState;
@@ -8,16 +9,23 @@ use axum::Json;
 use lib_core::{
     generate_jwt, generate_snowflake_id, ApiResult, ExtractJson, ExtractQuery, JwtUser,
 };
-use lib_entity::mysql::prelude::{AppletUser, AppletUserCreation};
-use lib_entity::mysql::{applet_pay_centre_record, applet_user, applet_user_creation};
+use lib_entity::mysql::prelude::{
+    AppletOperation, AppletOperationContent, AppletOperationTeamUser, AppletUser,
+    AppletUserCreation,
+};
+use lib_entity::mysql::{
+    applet_operation, applet_operation_content, applet_operation_team_user,
+    applet_pay_centre_record, applet_user, applet_user_creation,
+};
 use lib_utils::request_entity::PageResult;
 use lib_utils::{error_result, ok_result, ok_result_with_none};
 use sea_orm::prelude::Expr;
-use sea_orm::sqlx::types::chrono::Utc;
+use sea_orm::sqlx::types::chrono::{Local, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
 use tracing::error;
 
+/// 登录
 pub async fn login(
     State(state): State<AppState>,
     ExtractJson(param): ExtractJson<AppletLoginParam>,
@@ -91,6 +99,7 @@ pub async fn login(
     }
 }
 
+/// 修改用户信息
 pub async fn update_user(
     State(state): State<AppState>,
     user: JwtUser,
@@ -112,6 +121,7 @@ pub async fn update_user(
     Ok(error_result("操作失败，请稍后再试"))
 }
 
+/// 首页作品列表
 pub async fn creation_list(
     State(state): State<AppState>,
     ExtractQuery(param): ExtractQuery<UserCreationParam>,
@@ -132,6 +142,61 @@ pub async fn creation_list(
     Ok(ok_result(page_result))
 }
 
+/// 活动详情
+pub async fn operation(
+    State(state): State<AppState>,
+    user: JwtUser,
+) -> ApiResult<OperationResponse> {
+    let operation_option = AppletOperation::find()
+        .filter(Expr::col(applet_operation::Column::BeOpen).eq(true))
+        .one(&state.mysql_client)
+        .await?;
+    if let Some(operation) = operation_option {
+        // 获取活动详情
+        let contents = AppletOperationContent::find()
+            .filter(
+                Expr::col(applet_operation_content::Column::OperationId).eq(operation.id.clone()),
+            )
+            .all(&state.mysql_client)
+            .await?;
+        return Ok(ok_result(OperationResponse::new(operation, contents)));
+    }
+    Ok(ok_result_with_none())
+}
+
+/// 检查是否加入团购 团购的身份
+pub async fn user_team(
+    State(state): State<AppState>,
+    user: JwtUser,
+    ExtractQuery(param): ExtractQuery<UserTeamParam>,
+) -> ApiResult<String> {
+    let user_id = user.id;
+
+    // 检查本次团购是否到期
+    let operation_option = AppletOperation::find_by_id(param.operation_id)
+        .one(&state.mysql_client)
+        .await?;
+    if let Some(operation) = operation_option {
+        if Local::now().date_naive() > operation.end_time {
+            return Ok(error_result("本次活动已到期"));
+        }
+        let team_user_option = AppletOperationTeamUser::find()
+            .filter(
+                Expr::col(applet_operation_team_user::Column::UserId)
+                    .eq(user_id)
+                    .and(
+                        Expr::col(applet_operation_team_user::Column::OperationId).eq(operation.id),
+                    ),
+            )
+            .one(&state.mysql_client)
+            .await?;
+
+    }
+
+    Ok(ok_result_with_none())
+}
+
+/// 支付
 pub async fn pay(
     State(state): State<AppState>,
     user: JwtUser,

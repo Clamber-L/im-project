@@ -1,4 +1,6 @@
-use lib_entity::mysql::applet_user;
+use lib_entity::mysql::{applet_operation, applet_operation_content, applet_user};
+use sea_orm::prelude::DateTime;
+use sea_orm::sqlx::types::chrono::{Local, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
@@ -48,4 +50,45 @@ pub struct UserPayParam {
 pub struct UserCreationParam {
     pub page_num: u64,
     pub page_size: u64,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OperationResponse {
+    pub id: String,
+    pub created_time: Option<DateTime>,
+    pub name: String,
+    pub end_time: NaiveDate,
+    pub be_open: bool,
+    pub be_end: bool,
+    pub contents: Vec<applet_operation_content::Model>,
+}
+
+impl OperationResponse {
+    pub fn new(
+        operation: applet_operation::Model,
+        mut contents: Vec<applet_operation_content::Model>,
+    ) -> OperationResponse {
+        if !contents.is_empty() {
+            contents.sort_by(|a, b| a.id.cmp(&b.id));
+        }
+
+        let today = Local::now().date_naive(); // 当前日期（无时间部分）
+
+        Self {
+            id: operation.id,
+            created_time: operation.created_time,
+            name: operation.name,
+            end_time: operation.end_time,
+            be_end: operation.end_time <= today,
+            be_open: operation.be_open,
+            contents,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UserTeamParam {
+    pub operation_id: String,
 }
