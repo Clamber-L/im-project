@@ -190,7 +190,6 @@ pub async fn user_team(
             )
             .one(&state.mysql_client)
             .await?;
-
     }
 
     Ok(ok_result_with_none())
