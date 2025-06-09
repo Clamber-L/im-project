@@ -1,6 +1,6 @@
 use lib_entity::mysql::{applet_operation, applet_operation_content, applet_user};
 use sea_orm::prelude::DateTime;
-use sea_orm::sqlx::types::chrono::{Local, NaiveDate, Utc};
+use sea_orm::sqlx::types::chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
@@ -90,5 +90,45 @@ impl OperationResponse {
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserTeamParam {
+    pub operation_id: String,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamResponse {
+    pub team_id: String,
+    pub has_team: bool,
+    pub user_list: Vec<TeamUserResponse>,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamUserResponse {
+    pub user_id: String,
+    pub username: String,
+    pub avatar: String,
+}
+
+impl TeamResponse {
+    pub fn new(team_id: String, user_list: Vec<TeamUserResponse>) -> TeamResponse {
+        Self {
+            team_id,
+            has_team: true,
+            user_list,
+        }
+    }
+
+    pub fn new_none() -> TeamResponse {
+        Self {
+            team_id: "".to_string(),
+            has_team: false,
+            user_list: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateTeamParam {
     pub operation_id: String,
 }

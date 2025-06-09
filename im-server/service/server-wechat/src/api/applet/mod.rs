@@ -1,7 +1,9 @@
 pub mod entity;
 pub mod service;
 
-use crate::api::applet::service::{creation_list, login, operation, pay, update_user, user_team};
+use crate::api::applet::service::{
+    create_team, creation_list, login, operation, pay, update_user, user_team,
+};
 use crate::core::AppState;
 use axum::routing::{get, post};
 use axum::Router;
@@ -13,6 +15,7 @@ pub fn applet_api_router() -> Router<AppState> {
         .route("/creation_list", get(creation_list))
         .route("/operation", get(operation))
         .route("/team", get(user_team))
+        .route("/create_team", post(create_team))
         .route("/pay", post(pay));
     router
 }
