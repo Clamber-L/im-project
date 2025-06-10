@@ -38,4 +38,12 @@ jobs:
       - name: Package binary
         run: |
           mkdir -p dist
-          cp im-server/target/x86_64-unknown-linux-musl/release/serve_
+          cp im-server/target/x86_64-unknown-linux-musl/release/server-wechat dist/
+          cd dist
+          tar -czvf server-wechat-linux-musl.tar.gz server-wechat
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-wechat-static
+          path: dist/server-wechat-linux-musl.tar.gz
