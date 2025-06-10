@@ -27,3 +27,7 @@ wechat-pay-rust-sdk = { workspace = true }
 aliyun-oss-rust-sdk = { workspace = true }
 openssl = { workspace = true }
 openssl-sys = { workspace = true }
+
+[build-dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
+openssl-sys = "0.9"
