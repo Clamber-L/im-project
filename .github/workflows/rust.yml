@@ -1,4 +1,4 @@
-name: Build server-wechat (static musl)
+name: Build All Binaries (Static Linux)
 
 on:
   push:
@@ -8,43 +8,61 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: im-server
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
+      - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          target: x86_64-unknown-linux-musl
 
-      - name: Install musl tools
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
-      - name: Install musl target
-        run: rustup target add x86_64-unknown-linux-musl
-
-      - name: Set environment for static build
+      - name: Install dependencies for musl and OpenSSL
         run: |
-          echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
-          echo "RUSTFLAGS=-C target-feature=-crt-static" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y musl-tools pkg-config
 
-      - name: Build binary (musl, static)
+      - name: Build all binaries (statically linked)
+        env:
+          OPENSSL_STATIC: "1"
         run: |
-          export OPENSSL_STATIC=1
-          export OPENSSL_DIR=/usr/local/ssl
-          cargo build --release --target x86_64-unknown-linux-musl --manifest-path im-server/service/server-wechat/Cargo.toml
+          for crate in $(find service -maxdepth 1 -type d); do
+            if [ -f "$crate/Cargo.toml" ]; then
+              binary=$(basename "$crate")
+              echo "== Building $binary =="
+              cargo build --release --target x86_64-unknown-linux-musl --manifest-path "$crate/Cargo.toml"
+              mkdir -p dist/$binary
+              cp target/x86_64-unknown-linux-musl/release/$binary dist/$binary/
+              cd dist/$binary
+              tar -czvf ../${binary}-linux.tar.gz $binary
+              zip ../${binary}-linux.zip $binary
+              cd -
+            fi
+          done
 
-      - name: Package binary
-        run: |
-          mkdir -p dist
-          cp im-server/target/x86_64-unknown-linux-musl/release/server-wechat dist/
-          cd dist
-          tar -czvf server-wechat-linux-musl.tar.gz server-wechat
-
-      - name: Upload artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: server-wechat-static
-          path: dist/server-wechat-linux-musl.tar.gz
+          name: all-binaries
+          path: im-server/dist/*.tar.gz
+
+      - name: Upload Zip Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-zips
+          path: im-server/dist/*.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            im-server/dist/*.tar.gz
+            im-server/dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
