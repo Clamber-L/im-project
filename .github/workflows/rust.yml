@@ -13,11 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
-
-      - name: Set up Rust
+      - name: Set up Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -25,10 +21,21 @@ jobs:
 
       - name: Build server-wechat
         run: |
-          cargo build --release --manifest-path im-server/service/server-wechat/Cargo.toml
-          mkdir -p dist
-          cp im-server/service/server-wechat/target/release/server-wechat dist/
-          cd dist
+          cd im-server
+          cargo build --release --package server-wechat
+
+      - name: List build output
+        run: |
+          cd im-server
+          echo "== Contents of target/release =="
+          ls -alh target/release
+
+      - name: Package binary
+        run: |
+          cd im-server
+          mkdir -p ../dist
+          cp target/release/server-wechat ../dist/
+          cd ../dist
           tar -czvf server-wechat-linux.tar.gz server-wechat
 
       - name: Upload artifact
