@@ -1,4 +1,4 @@
-name: Build server-wechat
+name: Build server-wechat (static musl)
 
 on:
   push:
@@ -19,27 +19,32 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build server-wechat
-        run: |
-          cd im-server
-          cargo build --release --package server-wechat
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
 
-      - name: List build output
+      - name: Install musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
+      - name: Set environment for static build
         run: |
-          cd im-server
-          echo "== Contents of target/release =="
-          ls -alh target/release
+          echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
+          echo "RUSTFLAGS=-C target-feature=-crt-static" >> $GITHUB_ENV
+
+      - name: Build binary (musl, static)
+        run: |
+          export OPENSSL_STATIC=1
+          export OPENSSL_DIR=/usr/local/ssl
+          cargo build --release --target x86_64-unknown-linux-musl --manifest-path im-server/service/server-wechat/Cargo.toml
 
       - name: Package binary
         run: |
-          cd im-server
-          mkdir -p ../dist
-          cp target/release/server-wechat ../dist/
-          cd ../dist
-          tar -czvf server-wechat-linux.tar.gz server-wechat
+          mkdir -p dist
+          cp im-server/target/x86_64-unknown-linux-musl/release/server-wechat dist/
+          cd dist
+          tar -czvf server-wechat-linux-musl.tar.gz server-wechat
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: server-wechat
-          path: dist/server-wechat-linux.tar.gz
+          name: server-wechat-static
+          path: dist/server-wechat-linux-musl.tar.gz
