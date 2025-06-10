@@ -10,5 +10,5 @@ rustflags = [
     "link-arg=/DELAYLOAD:Packet.dll",
 ]
 
-[target.x86_64-unknown-linux-musl]
-rustflags = ["-C", "link-arg=-static"]
+#[target.x86_64-unknown-linux-musl]
+#rustflags = ["-C", "link-arg=-static"]
