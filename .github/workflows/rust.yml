@@ -1,10 +1,9 @@
-name: Build and Release All Rust Binaries
+name: Build server-wechat
 
 on:
   push:
-    tags:
-      - "v*.*.*"         # 只有打 tag 时才发布 Release，比如 v1.0.0
-  workflow_dispatch:      # 也可以手动触发
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,44 +13,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Rust
+      - name: Set up Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
-      - name: Build and package binaries
+      - name: Build binary
         run: |
-          cd im-server/service
-          mkdir -p ../../dist
+          cargo build --release --manifest-path im-server/service/server-wechat/Cargo.toml
+          mkdir -p dist
+          cp im-server/service/server-wechat/target/release/server-wechat dist/
+          cd dist
+          tar -czvf server-wechat-linux.tar.gz server-wechat
 
-          for dir in */; do
-            if [ -f "$dir/src/main.rs" ]; then
-              binary_name=${dir%/}
-              echo "🔨 Building $binary_name"
-
-              cargo build --release --manifest-path "$binary_name/Cargo.toml"
-
-              # 创建独立目录打包
-              mkdir -p "../../dist/$binary_name"
-              cp "target/release/$binary_name" "../../dist/$binary_name/"
-
-              cd "../../dist/$binary_name"
-              tar -czvf "../${binary_name}.tar.gz" "$binary_name"
-              zip "../${binary_name}.zip" "$binary_name"
-              cd - > /dev/null
-            fi
-          done
-
-      - name: Upload all artifacts (optional)
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: all-binaries
-          path: dist/*.{tar.gz,zip}
-
-      - name: Create GitHub Release and upload assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/*.{tar.gz,zip}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: server-wechat
+          path: dist/server-wechat-linux.tar.gz
