@@ -10,8 +10,8 @@ use lib_core::{
     generate_jwt, generate_snowflake_id, ApiResult, ExtractJson, ExtractQuery, JwtUser,
 };
 use lib_entity::mysql::prelude::{
-    AppletOperation, AppletOperationContent, AppletOperationTeamUser, AppletUser,
-    AppletUserCreation,
+    AppletOperation, AppletOperationContent, AppletOperationTeam, AppletOperationTeamUser,
+    AppletUser, AppletUserCreation,
 };
 use lib_entity::mysql::{
     applet_operation, applet_operation_content, applet_operation_team, applet_operation_team_user,
@@ -172,29 +172,36 @@ pub async fn user_team(
 ) -> ApiResult<TeamResponse> {
     let user_id = user.id;
 
-    println!("param:{:?}", param);
     // 检查本次团购是否到期
     let operation_option = AppletOperation::find_by_id(param.operation_id)
         .one(&state.mysql_client)
         .await?;
-    println!("operation_option:{:?}", operation_option);
     if let Some(operation) = operation_option {
         if Local::now().date_naive() > operation.end_time {
             return Ok(error_result("本次活动已到期"));
         }
+
+        let operation_id = operation.id.clone();
+
         let team_user_list = AppletOperationTeamUser::find()
             .filter(
-                Expr::col(applet_operation_team_user::Column::OperationId).eq(operation.id.clone()),
+                Expr::col(applet_operation_team_user::Column::OperationId).eq(operation_id.clone()),
             )
             .all(&state.mysql_client)
             .await?;
-        println!("team_user_list:{:?}", team_user_list);
 
         if !team_user_list.is_empty() {
-            let join_user_option = team_user_list
-                .iter()
-                .find(|team_user| team_user.user_id == user_id);
-            println!("join_user_option:{:?}", join_user_option);
+            let join_user_option = AppletOperationTeamUser::find()
+                .filter(
+                    Expr::col(applet_operation_team_user::Column::OperationId)
+                        .eq(operation_id.clone())
+                        .and(
+                            Expr::col(applet_operation_team_user::Column::UserId)
+                                .eq(user_id.clone()),
+                        ),
+                )
+                .one(&state.mysql_client)
+                .await?;
             if join_user_option.is_some() {
                 // 参加了团购 返回队伍列表
                 let join_user = join_user_option.unwrap();
@@ -202,7 +209,7 @@ pub async fn user_team(
                 let team_user_list = AppletOperationTeamUser::find()
                     .filter(
                         Expr::col(applet_operation_team_user::Column::OperationId)
-                            .eq(operation.id)
+                            .eq(operation_id.clone())
                             .and(
                                 Expr::col(applet_operation_team_user::Column::TeamId)
                                     .eq(join_user.team_id.clone()),
@@ -210,19 +217,30 @@ pub async fn user_team(
                     )
                     .all(&state.mysql_client)
                     .await?;
-                println!("team_user_list:{:?}", team_user_list);
-                let users = AppletUser::find().all(&state.mysql_client).await?;
+                let user_ids: Vec<String> =
+                    team_user_list.iter().map(|u| u.user_id.clone()).collect();
+                let users = AppletUser::find()
+                    .filter(Expr::col(applet_user::Column::Id).is_in(user_ids.clone()))
+                    .all(&state.mysql_client)
+                    .await?;
                 let user_map: HashMap<String, applet_user::Model> = users
                     .into_iter()
-                    .map(|user| (user.id.clone(), user.clone()))
+                    .map(|user| {
+                        let id = user.id.clone();
+                        (id, user)
+                    })
                     .collect();
                 // 组装数据
                 let user_response: Vec<TeamUserResponse> = team_user_list
                     .into_iter()
-                    .map(|team_user| TeamUserResponse {
-                        user_id: team_user.user_id.clone(),
-                        username: user_map.get(&team_user.user_id).unwrap().username.clone(),
-                        avatar: user_map.get(&team_user.user_id).unwrap().avatar.clone(),
+                    .filter_map(|team_user| {
+                        user_map
+                            .get(&team_user.user_id)
+                            .map(|user| TeamUserResponse {
+                                user_id: team_user.user_id,
+                                username: user.username.clone(),
+                                avatar: user.avatar.clone(),
+                            })
                     })
                     .collect();
                 return Ok(ok_result(TeamResponse::new(
@@ -243,6 +261,22 @@ pub async fn create_team(
 ) -> ApiResult<String> {
     println!("param:{:?}", param);
     // 判断活动是否到期
+    let operation_option = AppletOperation::find_by_id(param.operation_id.clone())
+        .one(&state.mysql_client)
+        .await?;
+    if let Some(operation) = operation_option {
+        if Local::now().date_naive() > operation.end_time {
+            return Ok(error_result("当前活动已到期，无法参加"));
+        }
+        // 判断是否已经加入团队
+        let team_user_option = AppletOperationTeamUser::find()
+            .filter(Expr::col(applet_operation_team_user::Column::UserId).eq(user.id.clone()))
+            .one(&state.mysql_client)
+            .await?;
+        if team_user_option.is_some() {
+            return Ok(error_result("你已经参与过本次活动"));
+        }
+    }
 
     let team = applet_operation_team::ActiveModel {
         id: Set(generate_snowflake_id()?),

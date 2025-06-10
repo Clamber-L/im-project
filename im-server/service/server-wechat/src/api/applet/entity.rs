@@ -80,7 +80,7 @@ impl OperationResponse {
             created_time: operation.created_time,
             name: operation.name,
             end_time: operation.end_time,
-            be_end: operation.end_time <= today,
+            be_end: operation.end_time < today,
             be_open: operation.be_open,
             contents,
         }
