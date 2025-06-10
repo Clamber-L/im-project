@@ -1,9 +1,10 @@
-name: Build server-wechat for Linux
+name: Build and Release All Rust Binaries
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - "v*.*.*"         # 只有打 tag 时才发布 Release，比如 v1.0.0
+  workflow_dispatch:      # 也可以手动触发
 
 jobs:
   build:
@@ -13,27 +14,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
+      - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
-      - name: Build server-wechat binary
+      - name: Build and package binaries
         run: |
-          cd im-server/service/server-wechat
-          cargo build --release
+          cd im-server/service
+          mkdir -p ../../dist
 
-      - name: Package binary as tar.gz
-        run: |
-          mkdir -p dist
-          cp im-server/service/server-wechat/target/release/server-wechat dist/
-          cd dist
-          tar -czvf server-wechat-linux.tar.gz server-wechat
-          cd ..
+          for dir in */; do
+            if [ -f "$dir/src/main.rs" ]; then
+              binary_name=${dir%/}
+              echo "🔨 Building $binary_name"
 
-      - name: Upload artifact
+              cargo build --release --manifest-path "$binary_name/Cargo.toml"
+
+              # 创建独立目录打包
+              mkdir -p "../../dist/$binary_name"
+              cp "target/release/$binary_name" "../../dist/$binary_name/"
+
+              cd "../../dist/$binary_name"
+              tar -czvf "../${binary_name}.tar.gz" "$binary_name"
+              zip "../${binary_name}.zip" "$binary_name"
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Upload all artifacts (optional)
         uses: actions/upload-artifact@v4
         with:
-          name: server-wechat-linux
-          path: dist/server-wechat-linux.tar.gz
+          name: all-binaries
+          path: dist/*.{tar.gz,zip}
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*.{tar.gz,zip}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
