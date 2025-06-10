@@ -146,10 +146,7 @@ pub async fn creation_list(
 }
 
 /// 活动详情
-pub async fn operation(
-    State(state): State<AppState>,
-    user: JwtUser,
-) -> ApiResult<OperationResponse> {
+pub async fn operation(State(state): State<AppState>) -> ApiResult<OperationResponse> {
     let operation_option = AppletOperation::find()
         .filter(Expr::col(applet_operation::Column::BeOpen).eq(true))
         .one(&state.mysql_client)
@@ -245,6 +242,8 @@ pub async fn create_team(
     ExtractJson(param): ExtractJson<CreateTeamParam>,
 ) -> ApiResult<String> {
     println!("param:{:?}", param);
+    // 判断活动是否到期
+
     let team = applet_operation_team::ActiveModel {
         id: Set(generate_snowflake_id()?),
         team_user_id: Set(user.id.clone()),
