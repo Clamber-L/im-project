@@ -25,7 +25,5 @@ hex = { workspace = true }
 tower-http = { workspace = true }
 wechat-pay-rust-sdk = { workspace = true }
 aliyun-oss-rust-sdk = { workspace = true }
-
-[target.x86_64-unknown-linux-musl]
-rustflags = ["-C", "link-arg=-lm"]
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = { workspace = true }
+openssl-sys = { workspace = true }

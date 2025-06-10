@@ -1,4 +1,4 @@
-name: Build All Binaries (Static Linux)
+name: Build Rust Binaries
 
 on:
   push:
@@ -8,30 +8,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: im-server
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential cmake perl musl-tools
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          override: true
           target: x86_64-unknown-linux-musl
-
-      - name: Install dependencies for musl and OpenSSL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools pkg-config
+          override: true
 
       - name: Build all binaries (statically linked)
         env:
           OPENSSL_STATIC: "1"
+          OPENSSL_NO_VENDOR_CHECK: "1"
         run: |
+          cd im-server
+          mkdir -p dist
           for crate in $(find service -maxdepth 1 -type d); do
             if [ -f "$crate/Cargo.toml" ]; then
               binary=$(basename "$crate")
@@ -46,23 +44,24 @@ jobs:
             fi
           done
 
-      - name: Upload Artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: all-binaries
+          name: rust-binaries
           path: im-server/dist/*.tar.gz
-
-      - name: Upload Zip Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: all-zips
-          path: im-server/dist/*.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
         with:
-          files: |
-            im-server/dist/*.tar.gz
-            im-server/dist/*.zip
+          files: im-server/dist/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload ZIPs to Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          files: im-server/dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
