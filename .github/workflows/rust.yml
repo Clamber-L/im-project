@@ -1,0 +1,38 @@
+name: Build server-wechat for Linux
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: stable
+
+      - name: Build server-wechat binary
+        run: |
+          cd im-server/service/server-wechat
+          cargo build --release
+
+      - name: Package binary as tar.gz
+        run: |
+          mkdir -p dist
+          cp im-server/service/server-wechat/target/release/server-wechat dist/
+          cd dist
+          tar -czvf server-wechat-linux.tar.gz server-wechat
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-wechat-linux
+          path: dist/server-wechat-linux.tar.gz
