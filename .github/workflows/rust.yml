@@ -19,31 +19,23 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
       - name: Install musl target
         run: rustup target add x86_64-unknown-linux-musl
 
-      - name: Set environment for OpenSSL static build
-        run: echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
+      - name: Set environment for static build
+        run: |
+          echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
+          echo "RUSTFLAGS=-C target-feature=-crt-static" >> $GITHUB_ENV
 
-      - name: Build static binary (server-wechat)
+      - name: Build static binary
         run: |
           cd im-server
           cargo build --release --package server-wechat --target x86_64-unknown-linux-musl
 
-      - name: List built binary
-        run: |
-          cd im-server/target/x86_64-unknown-linux-musl/release
-          ls -alh
-
       - name: Package binary
         run: |
           mkdir -p dist
-          cp im-server/target/x86_64-unknown-linux-musl/release/server-wechat dist/
-          cd dist
-          tar -czvf server-wechat-linux-musl.tar.gz server-wechat
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-wechat-static
-          path: dist/server-wechat-linux-musl.tar.gz
+          cp im-server/target/x86_64-unknown-linux-musl/release/serve_
