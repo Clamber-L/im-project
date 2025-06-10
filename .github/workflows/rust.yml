@@ -22,13 +22,26 @@ jobs:
       - name: Build binary
         run: |
           cargo build --release --manifest-path im-server/service/server-wechat/Cargo.toml
+
+      - name: List build output
+        run: |
+          echo "== Contents of target/release =="
+          ls -alh target/release
+
+      - name: Package binary (auto-detect actual file)
+        run: |
+          # 检查实际编译出来的二进制文件名
+          FILE=$(find target/release -maxdepth 1 -type f -executable ! -name "*.*" | head -n 1)
+          echo "Found binary: $FILE"
+
           mkdir -p dist
-          cp target/release/server-wechat dist/
+          cp "$FILE" dist/
           cd dist
-          tar -czvf server-wechat-linux.tar.gz server-wechat
+          BASENAME=$(basename "$FILE")
+          tar -czvf "$BASENAME-linux.tar.gz" "$BASENAME"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-wechat
-          path: dist/server-wechat-linux.tar.gz
+          path: dist/*.tar.gz
