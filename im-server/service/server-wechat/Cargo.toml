@@ -2,7 +2,6 @@
 name = "server-wechat"
 version = "0.1.0"
 edition = "2021"
-build = "build.rs"
 
 [dependencies]
 lib-core = { workspace = true }
@@ -25,9 +24,3 @@ hex = { workspace = true }
 tower-http = { workspace = true }
 wechat-pay-rust-sdk = { workspace = true }
 aliyun-oss-rust-sdk = { workspace = true }
-openssl = { workspace = true }
-openssl-sys = { workspace = true }
-
-[build-dependencies]
-openssl = { version = "0.10", features = ["vendored"] }
-openssl-sys = "0.9"
