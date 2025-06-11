@@ -11,5 +11,4 @@ rustflags = [
 ]
 
 [target.x86_64-unknown-linux-musl]
-rustflags = ["-C", "target-feature=-crt-static"] # 不启用 Rust 自带 C runtime，避免冲突
-
+linker = "x86_64-linux-musl-gcc"
