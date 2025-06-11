@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+TARGET=${1:-x86_64-unknown-linux-musl}
+PROFILE=${2:-release}
+
+# 清除干扰构建的 OpenSSL 相关环境变量
+unset OPENSSL_NO_PKG_CONFIG
+unset OPENSSL_DIR
+unset OPENSSL_LIB_DIR
+unset OPENSSL_INCLUDE_DIR
+
+# 使用 zigbuild 编译指定目标
+cargo zigbuild --target "$TARGET" --profile "$PROFILE"
