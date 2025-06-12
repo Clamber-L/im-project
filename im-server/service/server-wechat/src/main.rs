@@ -13,7 +13,7 @@ async fn main() -> Result<()> {
 
     let app_config = ApplicationEntity::try_load_yml()?;
 
-    let addr = format!("127.0.0.1:{}", app_config.port);
+    let addr = format!("0.0.0.0:{}", app_config.port);
     let listener = TcpListener::bind(&addr).await?;
 
     let router = init_app(app_config).await?;
