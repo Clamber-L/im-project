@@ -55,7 +55,7 @@ axum-extra = "0.10.0"
 # orm
 sea-orm = { version = "1.1.1", features = [
     "sqlx-mysql",
-    "runtime-tokio-native-tls",
+    "runtime-tokio-rustls",
     "macros",
 ] }
 ts-bind = "0.1.7"
@@ -105,7 +105,6 @@ dashmap = "6.1.0"
 derive_builder = "0.20.2"
 reqwest = { version = "0.12.5", default-features = false, features = [
     "json",
-    "default",
     "rustls-tls",
     "gzip",
     "blocking",
@@ -125,5 +124,5 @@ rand = "0.9.0"
 uuid = { version = "1.17.0", features = ["v4"] }
 
 # ssl
-openssl-sys = "0.9"
 openssl = { version = "0.10", features = ["vendored"] }
+native-tls = { version = "0.2", features = ["vendored"] }

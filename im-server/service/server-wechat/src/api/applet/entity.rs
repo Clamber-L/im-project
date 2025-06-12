@@ -1,4 +1,6 @@
-use lib_entity::mysql::{applet_operation, applet_operation_content, applet_user};
+use lib_entity::mysql::{
+    applet_operation, applet_operation_content, applet_user,
+};
 use sea_orm::prelude::DateTime;
 use sea_orm::sqlx::types::chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
@@ -131,4 +133,32 @@ impl TeamResponse {
 #[serde(rename_all = "camelCase")]
 pub struct CreateTeamParam {
     pub operation_id: String,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OperationUserNumParam {
+    pub operation_id: String,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OperationUserNumResponse {
+    pub today_num: usize,
+    pub all_num: usize,
+    pub buy_user_list: Vec<TeamUserResponse>,
+}
+
+impl OperationUserNumResponse {
+    pub fn new(
+        today_num: usize,
+        all_num: usize,
+        buy_user_list: Vec<TeamUserResponse>,
+    ) -> OperationUserNumResponse {
+        Self {
+            today_num,
+            all_num,
+            buy_user_list,
+        }
+    }
 }

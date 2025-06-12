@@ -1,6 +1,6 @@
 use crate::api::applet::entity::{
-    AppletLoginParam, CreateTeamParam, OperationResponse, UserCreationParam, UserLoginResponse,
-    UserPayParam, UserTeamParam,
+    AppletLoginParam, CreateTeamParam, OperationResponse, OperationUserNumParam,
+    OperationUserNumResponse, UserCreationParam, UserLoginResponse, UserPayParam, UserTeamParam,
 };
 use crate::core::service::wechat_api::{access_token, get_user_phone, user_by_code};
 use crate::core::AppState;
@@ -18,7 +18,7 @@ use lib_entity::mysql::{
     applet_pay_centre_record, applet_user, applet_user_creation,
 };
 use lib_utils::request_entity::PageResult;
-use lib_utils::{error_result, ok_result, ok_result_with_none};
+use lib_utils::{error_result, ok_result, ok_result_with_none, today_date};
 use sea_orm::prelude::Expr;
 use sea_orm::sqlx::types::chrono::{Local, Utc};
 use sea_orm::ActiveValue::Set;
@@ -299,6 +299,59 @@ pub async fn create_team(
     .insert(&state.mysql_client)
     .await?;
     Ok(ok_result_with_none())
+}
+
+/// 团购人数
+pub async fn operation_user_num(
+    State(state): State<AppState>,
+    _user: JwtUser,
+    ExtractQuery(param): ExtractQuery<OperationUserNumParam>,
+) -> ApiResult<OperationUserNumResponse> {
+    println!("operation_user_num param:{:?}", param);
+    let operation_users = AppletOperationTeamUser::find()
+        .filter(Expr::col(applet_operation_team_user::Column::OperationId).eq(param.operation_id))
+        .all(&state.mysql_client)
+        .await?;
+    println!("operation users len:{:?}", operation_users.len());
+
+    if operation_users.is_empty() {
+        Ok(ok_result(OperationUserNumResponse::new(0, 0, vec![])))
+    } else {
+        // 判断今日人数
+        let (start, end) = today_date();
+        let today_num = operation_users
+            .iter()
+            .filter_map(|user| user.created_time)
+            .filter(|&dt| dt > start.naive_local() && dt < end.naive_local())
+            .count();
+        // 获取用户列表信息
+        let users = AppletUser::find().all(&state.mysql_client).await?;
+        let user_map: HashMap<String, applet_user::Model> = users
+            .into_iter()
+            .map(|user| {
+                let id = user.id.clone();
+                (id, user)
+            })
+            .collect();
+        let user_response: Vec<TeamUserResponse> = operation_users
+            .iter()
+            .filter_map(|team_user| {
+                user_map
+                    .get(&team_user.user_id)
+                    .map(|user| TeamUserResponse {
+                        user_id: team_user.user_id.clone(),
+                        username: user.username.clone(),
+                        avatar: user.avatar.clone(),
+                    })
+            })
+            .collect();
+
+        Ok(ok_result(OperationUserNumResponse::new(
+            today_num,
+            operation_users.len(),
+            user_response,
+        )))
+    }
 }
 
 /// 支付
