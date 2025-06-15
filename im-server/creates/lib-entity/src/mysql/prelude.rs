@@ -12,6 +12,7 @@ pub use super::applet_operation_content::Entity as AppletOperationContent;
 pub use super::applet_operation_team::Entity as AppletOperationTeam;
 pub use super::applet_operation_team_user::Entity as AppletOperationTeamUser;
 pub use super::applet_pay_centre_record::Entity as AppletPayCentreRecord;
+pub use super::applet_settings::Entity as AppletSettings;
 pub use super::applet_user::Entity as AppletUser;
 pub use super::applet_user_creation::Entity as AppletUserCreation;
 pub use super::litemall_checkpoint::Entity as LitemallCheckPoint;

@@ -6,7 +6,7 @@ use std::time::SystemTime;
 pub mod wechat_api;
 
 /// 微信支付生成随机数
-fn generate_wechat_pay_nonce_str() -> String {
+fn _generate_wechat_pay_nonce_str() -> String {
     rand::rng()
         .sample_iter(&Alphanumeric)
         .take(32)
@@ -14,7 +14,7 @@ fn generate_wechat_pay_nonce_str() -> String {
         .collect()
 }
 
-fn generate_wechat_pay_timestamp() -> String {
+fn _generate_wechat_pay_timestamp() -> String {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let timestamp = since_the_epoch.as_secs().to_string();
@@ -22,7 +22,7 @@ fn generate_wechat_pay_timestamp() -> String {
     timestamp
 }
 
-pub fn generate_short_name() -> String {
+pub fn _generate_short_name() -> String {
     let timestamp = Utc::now().timestamp();
     let rand_str: String = rand::rng()
         .sample_iter(&Alphanumeric)

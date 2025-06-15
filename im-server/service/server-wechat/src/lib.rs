@@ -21,6 +21,8 @@ pub async fn init_app(application: ApplicationEntity) -> Result<Router> {
         application.applet,
         RedisService::new(redis_client),
         mysql_client,
+        application.oss,
+        application.pay,
     );
 
     let cors = CorsLayer::new()

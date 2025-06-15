@@ -16,3 +16,4 @@ im-server/service/server-auth/.env
 im-server/service/server-message/app.yml
 im-server/service/server-user/app.yml
 im-server/server-wechat.yml
+im-server/apiclient_key.pem

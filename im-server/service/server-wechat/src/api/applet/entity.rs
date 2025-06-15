@@ -1,6 +1,4 @@
-use lib_entity::mysql::{
-    applet_operation, applet_operation_content, applet_user,
-};
+use lib_entity::mysql::{applet_operation, applet_operation_content, applet_user};
 use sea_orm::prelude::DateTime;
 use sea_orm::sqlx::types::chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
@@ -38,6 +36,12 @@ impl UserLoginResponse {
             phone: user.phone,
         }
     }
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AppletSettingParam {
+    pub setting_type: i32,
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]

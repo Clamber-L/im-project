@@ -14,6 +14,7 @@ pub mod applet_operation_content;
 pub mod applet_operation_team;
 pub mod applet_operation_team_user;
 pub mod applet_pay_centre_record;
+pub mod applet_settings;
 pub mod applet_user;
 pub mod applet_user_creation;
 pub mod litemall_checkpoint;

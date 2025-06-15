@@ -1,18 +1,17 @@
 use crate::api::applet::entity::WechatLoginByCodeResponse;
-use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL, WECHAT_PAY_API};
-use crate::core::entity::{WechatAccessTokenResponse, WechatPhoneResponse};
-use crate::core::service::{generate_wechat_pay_nonce_str, generate_wechat_pay_timestamp};
+use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL};
+use crate::core::entity::{PayConfig, WechatAccessTokenResponse, WechatPhoneResponse};
 use anyhow::Result;
 use lib_core::key_constants::WECHAT_ACCESS_TOKEN;
 use lib_core::{AppError, RedisService};
 use reqwest::header::CONTENT_TYPE;
-use reqwest::{Client, StatusCode};
-use serde_json::{json, Value};
+use reqwest::Client;
 use std::collections::HashMap;
-use tracing::{error, info};
+use std::fs::read_to_string;
+use wechat_pay_rust_sdk::error::PayError;
 use wechat_pay_rust_sdk::model::{AmountInfo, MicroParams, PayerInfo};
-use wechat_pay_rust_sdk::pay::{PayNotifyTrait, WechatPay, WechatPayTrait};
-use wechat_pay_rust_sdk::{sign, util};
+use wechat_pay_rust_sdk::pay::WechatPay;
+use wechat_pay_rust_sdk::response::MicroResponse;
 
 /// 获取access_token
 pub async fn access_token(
@@ -117,23 +116,32 @@ pub async fn user_by_code(
 
 /// 微信支付
 pub async fn user_wechat_pay(
-    app_id: String,
-    mch_id: String,
+    pay_config: &PayConfig,
     description: String,
     order_id: String,
-    notify_url: String,
     total_amount: i32,
     open_id: String,
-) -> Result<(), AppError> {
+) -> Result<MicroResponse, AppError> {
+    let pay_config = pay_config.clone();
+
+    let path = &pay_config.key_path;
+
+    // 读取文件内容为字符串
+    let contents = read_to_string(path);
+    if contents.is_err() {
+        return Err(AppError::WechatPayError(PayError::WeixinNotFound));
+    }
+
+    let contents = contents.unwrap();
     let wechat_pay = WechatPay::new(
-        app_id,
-        mch_id,
-        String::from("./apiclient_key.pem"),
-        String::new(),
-        String::new(),
-        notify_url,
+        &pay_config.app_id,
+        &pay_config.mch_id,
+        &contents,
+        &pay_config.serial_no,
+        &pay_config.v3_key,
+        &pay_config.notify_url,
     );
-    let x = wechat_pay
+    let response = wechat_pay
         .micro_pay(MicroParams {
             description,
             out_trade_no: order_id,
@@ -147,39 +155,7 @@ pub async fn user_wechat_pay(
             scene_info: None,
         })
         .await?;
-    Ok(())
-}
-
-/// 获取微信支付预支付参数
-pub async fn wechat_http_order_post(
-    client: &Client,
-    url: &str,
-    params_str: &str,
-) -> Result<HashMap<String, Value>, AppError> {
-    let response = client
-        .post(url)
-        .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
-        .body(params_str.to_owned())
-        .send()
-        .await?;
-
-    let status = response.status();
-    let body = response.text().await?;
-
-    if status == StatusCode::OK || status == StatusCode::NO_CONTENT {
-        info!("成功，返回结果: {}", body);
-        let data: HashMap<String, Value> = serde_json::from_str(&body)?;
-        Ok(data)
-    } else {
-        let msg = format!(
-            "微信支付请求失败，响应码 = {}, 返回结果 = {}",
-            status.as_u16(),
-            body
-        );
-        error!("支付模块-生成订单 = {}", msg);
-        Err(AppError::InternalServerError)
-    }
+    Ok(response)
 }
 
 // fn _test_wechat_pay() {

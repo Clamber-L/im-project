@@ -1,21 +1,26 @@
+use super::entity::{TeamResponse, TeamUserResponse};
 use crate::api::applet::entity::{
-    AppletLoginParam, CreateTeamParam, OperationResponse, OperationUserNumParam,
-    OperationUserNumResponse, UserCreationParam, UserLoginResponse, UserPayParam, UserTeamParam,
+    AppletLoginParam, AppletSettingParam, CreateTeamParam, OperationResponse,
+    OperationUserNumParam, OperationUserNumResponse, UserCreationParam, UserLoginResponse,
+    UserPayParam, UserTeamParam,
 };
-use crate::core::service::wechat_api::{access_token, get_user_phone, user_by_code};
+use crate::core::service::wechat_api::{
+    access_token, get_user_phone, user_by_code, user_wechat_pay,
+};
 use crate::core::AppState;
 use axum::extract::State;
 use axum::Json;
 use lib_core::{
     generate_jwt, generate_snowflake_id, ApiResult, ExtractJson, ExtractQuery, JwtUser,
 };
+use lib_entity::mysql::applet_settings::Model;
 use lib_entity::mysql::prelude::{
     AppletOperation, AppletOperationContent, AppletOperationTeam, AppletOperationTeamUser,
-    AppletUser, AppletUserCreation,
+    AppletSettings, AppletUser, AppletUserCreation,
 };
 use lib_entity::mysql::{
     applet_operation, applet_operation_content, applet_operation_team, applet_operation_team_user,
-    applet_pay_centre_record, applet_user, applet_user_creation,
+    applet_pay_centre_record, applet_settings, applet_user, applet_user_creation,
 };
 use lib_utils::request_entity::PageResult;
 use lib_utils::{error_result, ok_result, ok_result_with_none, today_date};
@@ -25,8 +30,7 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
 use std::collections::HashMap;
 use tracing::error;
-
-use super::entity::{TeamResponse, TeamUserResponse};
+use wechat_pay_rust_sdk::response::MicroResponse;
 
 /// 登录
 pub async fn login(
@@ -122,6 +126,21 @@ pub async fn update_user(
         return Ok(ok_result(UserLoginResponse::new(param.token, applet_user)));
     };
     Ok(error_result("操作失败，请稍后再试"))
+}
+
+pub async fn settings(
+    State(state): State<AppState>,
+    ExtractQuery(param): ExtractQuery<AppletSettingParam>,
+) -> ApiResult<Model> {
+    let setting_option = AppletSettings::find()
+        .filter(Expr::col(applet_settings::Column::SettingType).eq(param.setting_type))
+        .one(&state.mysql_client)
+        .await?;
+    if let Some(setting) = setting_option {
+        Ok(ok_result(setting))
+    } else {
+        Ok(ok_result_with_none())
+    }
 }
 
 /// 首页作品列表
@@ -358,8 +377,8 @@ pub async fn operation_user_num(
 pub async fn pay(
     State(state): State<AppState>,
     user: JwtUser,
-    Json(param): Json<UserPayParam>,
-) -> ApiResult<String> {
+    ExtractJson(param): ExtractJson<UserPayParam>,
+) -> ApiResult<()> {
     // 获取用户openid
     let res = user_by_code(
         &state.request_client,
@@ -375,7 +394,7 @@ pub async fn pay(
 
     // 获取用户信息
     let applet_user = AppletUser::find()
-        .filter(Expr::col(applet_user::Column::OpenId).is(&openid))
+        .filter(Expr::col(applet_user::Column::OpenId).eq(&openid))
         .one(&state.mysql_client)
         .await?;
     if applet_user.is_none() {
@@ -384,6 +403,17 @@ pub async fn pay(
     }
 
     let applet_user = applet_user.unwrap();
+
+    // 调用微信支付
+    let pay_res = user_wechat_pay(
+        &state.pay_config,
+        String::from("测试支付"),
+        String::from("123456781"),
+        1,
+        applet_user.open_id,
+    )
+    .await?;
+    println!("pay res:{:?}", pay_res);
 
     // 生成支付中间表
     let record = applet_pay_centre_record::ActiveModel {
@@ -394,5 +424,9 @@ pub async fn pay(
         updated_time: Set(Some(Utc::now().naive_local())),
     };
     record.insert(&state.mysql_client).await?;
+    Ok(ok_result_with_none())
+}
+
+pub async fn pay_callback() -> ApiResult<()> {
     Ok(ok_result_with_none())
 }
