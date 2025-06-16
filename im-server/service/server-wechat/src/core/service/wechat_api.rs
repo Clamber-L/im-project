@@ -2,6 +2,9 @@ use crate::api::applet::entity::WechatLoginByCodeResponse;
 use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL};
 use crate::core::entity::{PayConfig, WechatAccessTokenResponse, WechatPhoneResponse};
 use anyhow::Result;
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
 use lib_core::key_constants::WECHAT_ACCESS_TOKEN;
 use lib_core::{AppError, RedisService};
 use reqwest::header::CONTENT_TYPE;
@@ -158,52 +161,9 @@ pub async fn user_wechat_pay(
     Ok(response)
 }
 
-// fn _test_wechat_pay() {
-//     // 常规配置参数
-//     let mut params: HashMap<String, Value> = HashMap::new();
-//
-//     // 1. 基本字段
-//     params.insert("appid".into(), json!(app_id));
-//     params.insert("mchid".into(), json!(mch_id));
-//     params.insert("description".into(), json!(description));
-//     params.insert("out_trade_no".into(), json!(order_id));
-//     params.insert("notify_url".into(), json!(notify_url));
-//
-//     // 2. 金额参数
-//     let amount = json!({
-//         "total": total_amount,
-//         "currency": "CNY"
-//     });
-//     params.insert("amount".into(), amount);
-//
-//     // 3. 用户在商户appid下的唯一标识。
-//     let payer = json!({
-//         "openid": open_id,
-//     });
-//     params.insert("payer".into(), payer);
-//
-//     // 4. 转为 JSON 字符串
-//     let params_str = serde_json::to_string(&params)?;
-//     println!("请求参数 ===> {}", params_str);
-//
-//     // 5. 微信预支付
-//     let response_body = wechat_http_order_post(client, WECHAT_PAY_API, &params_str).await?;
-//     if let Some(Value::String(prepay_id)) = response_body.get("prepay_id") {
-//         info!("prepay_id: {}", prepay_id);
-//
-//         // 6. 获取签名
-//         let nonce_str = generate_wechat_pay_nonce_str();
-//
-//         let timestamp = generate_wechat_pay_timestamp();
-//
-//         let sign_content = format!(
-//             "{}\n{}\n{}\nprepay_id={}\n",
-//             app_id, timestamp, nonce_str, prepay_id
-//         );
-//
-//         // 4. 加载私钥
-//         let private_key = std::fs::read_to_string("apiclient_key.pem").unwrap();
-//         let sign = crate::core::service::wechat_api::sha256_sign(private_key, sign_content);
-//         info!("签名串: {:?}", sign);
-//     }
-// }
+pub fn wechat_pay_response() -> impl IntoResponse {
+    let mut res_map = HashMap::new();
+    res_map.insert("code", "SUCCESS");
+    res_map.insert("message", "成功");
+    (StatusCode::OK, Json(res_map))
+}

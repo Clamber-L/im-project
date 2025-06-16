@@ -2,6 +2,7 @@ use lib_entity::mysql::{applet_operation, applet_operation_content, applet_user}
 use sea_orm::prelude::DateTime;
 use sea_orm::sqlx::types::chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
+use wechat_pay_rust_sdk::response::SignData;
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -42,6 +43,15 @@ impl UserLoginResponse {
 #[serde(rename_all = "camelCase")]
 pub struct AppletSettingParam {
     pub setting_type: i32,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OperationUserResponse {
+    pub operation_name: String,
+    pub commander: bool,
+    pub has_operation: bool,
+    pub joined: bool,
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
@@ -163,6 +173,30 @@ impl OperationUserNumResponse {
             today_num,
             all_num,
             buy_user_list,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PayResponse {
+    pub prepay_id: String,
+    pub sign_type: String,
+    pub package: String,
+    pub nonce_str: String,
+    pub timestamp: String,
+    pub pay_sign: String,
+}
+
+impl PayResponse {
+    pub(crate) fn new(prepay_id: String, sign_data: SignData) -> Self {
+        Self {
+            prepay_id,
+            sign_type: sign_data.sign_type,
+            package: sign_data.package,
+            nonce_str: sign_data.nonce_str,
+            timestamp: sign_data.timestamp,
+            pay_sign: sign_data.pay_sign,
         }
     }
 }

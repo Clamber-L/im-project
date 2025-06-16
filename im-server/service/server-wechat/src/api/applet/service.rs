@@ -1,14 +1,15 @@
-use super::entity::{TeamResponse, TeamUserResponse};
+use super::entity::{OperationUserResponse, PayResponse, TeamResponse, TeamUserResponse};
 use crate::api::applet::entity::{
     AppletLoginParam, AppletSettingParam, CreateTeamParam, OperationResponse,
     OperationUserNumParam, OperationUserNumResponse, UserCreationParam, UserLoginResponse,
     UserPayParam, UserTeamParam,
 };
 use crate::core::service::wechat_api::{
-    access_token, get_user_phone, user_by_code, user_wechat_pay,
+    access_token, get_user_phone, user_by_code, user_wechat_pay, wechat_pay_response,
 };
 use crate::core::AppState;
 use axum::extract::State;
+use axum::response::IntoResponse;
 use axum::Json;
 use lib_core::{
     generate_jwt, generate_snowflake_id, ApiResult, ExtractJson, ExtractQuery, JwtUser,
@@ -28,8 +29,9 @@ use sea_orm::prelude::Expr;
 use sea_orm::sqlx::types::chrono::{Local, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
+use sha1::digest::typenum::op;
 use std::collections::HashMap;
-use tracing::error;
+use tracing::{error, info};
 use wechat_pay_rust_sdk::response::MicroResponse;
 
 /// 登录
@@ -181,6 +183,68 @@ pub async fn operation(State(state): State<AppState>) -> ApiResult<OperationResp
         return Ok(ok_result(OperationResponse::new(operation, contents)));
     }
     Ok(ok_result_with_none())
+}
+
+/// 用户团购身份
+pub async fn operation_user(
+    State(state): State<AppState>,
+    user: JwtUser,
+) -> ApiResult<OperationUserResponse> {
+    // 获取当前开启的团购
+    let operation = match AppletOperation::find()
+        .filter(Expr::col(applet_operation::Column::BeOpen).eq(true))
+        .one(&state.mysql_client)
+        .await?
+    {
+        Some(op) => op,
+        None => {
+            return Ok(ok_result(OperationUserResponse {
+                has_operation: false,
+                operation_name: String::new(),
+                commander: false,
+                joined: false,
+            }));
+        }
+    };
+
+    let operation_name = operation.name.clone();
+
+    // 查找当前用户是否是团长
+    if AppletOperationTeam::find()
+        .filter(
+            Expr::col(applet_operation_team::Column::OperationId)
+                .eq(operation.id.clone())
+                .and(Expr::col(applet_operation_team::Column::TeamUserId).eq(user.id.clone())),
+        )
+        .one(&state.mysql_client)
+        .await?
+        .is_some()
+    {
+        Ok(ok_result(OperationUserResponse {
+            operation_name,
+            has_operation: true,
+            commander: true,
+            joined: true,
+        }))
+    } else {
+        // 查找是否加入团队
+        let joined = AppletOperationTeamUser::find()
+            .filter(
+                Expr::col(applet_operation_team_user::Column::OperationId)
+                    .eq(operation.id)
+                    .and(Expr::col(applet_operation_team_user::Column::UserId).eq(user.id)),
+            )
+            .one(&state.mysql_client)
+            .await?
+            .is_some();
+
+        Ok(ok_result(OperationUserResponse {
+            operation_name,
+            has_operation: true,
+            commander: false,
+            joined,
+        }))
+    }
 }
 
 /// 检查是否加入团购 团购的身份
@@ -378,7 +442,7 @@ pub async fn pay(
     State(state): State<AppState>,
     user: JwtUser,
     ExtractJson(param): ExtractJson<UserPayParam>,
-) -> ApiResult<()> {
+) -> ApiResult<PayResponse> {
     // 获取用户openid
     let res = user_by_code(
         &state.request_client,
@@ -404,29 +468,36 @@ pub async fn pay(
 
     let applet_user = applet_user.unwrap();
 
+    // 判断用户是否在本次活动中支付完成
+
     // 调用微信支付
     let pay_res = user_wechat_pay(
         &state.pay_config,
         String::from("测试支付"),
-        String::from("123456781"),
+        String::from("1222267813"),
         1,
         applet_user.open_id,
     )
     .await?;
     println!("pay res:{:?}", pay_res);
 
-    // 生成支付中间表
-    let record = applet_pay_centre_record::ActiveModel {
-        id: Set(generate_snowflake_id()?),
-        user_id: Set(user.id),
-        group_buy_id: Set(param.group_buy_id),
-        created_time: Set(Some(Utc::now().naive_local())),
-        updated_time: Set(Some(Utc::now().naive_local())),
-    };
-    record.insert(&state.mysql_client).await?;
-    Ok(ok_result_with_none())
+    if let Some(sign_data) = pay_res.sign_data {
+        let prepay_id = pay_res.prepay_id.unwrap();
+        // 生成支付中间表
+        let record = applet_pay_centre_record::ActiveModel {
+            id: Set(generate_snowflake_id()?),
+            user_id: Set(user.id),
+            group_buy_id: Set(param.group_buy_id),
+            created_time: Set(Some(Utc::now().naive_local())),
+            updated_time: Set(Some(Utc::now().naive_local())),
+        };
+        record.insert(&state.mysql_client).await?;
+        return Ok(ok_result(PayResponse::new(prepay_id, sign_data)));
+    }
+    Ok(error_result("支付失败"))
 }
 
-pub async fn pay_callback() -> ApiResult<()> {
-    Ok(ok_result_with_none())
+pub async fn pay_callback() -> impl IntoResponse {
+    info!("接收到微信支付回调");
+    wechat_pay_response()
 }
