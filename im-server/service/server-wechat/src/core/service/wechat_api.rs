@@ -2,7 +2,8 @@ use crate::api::applet::entity::WechatLoginByCodeResponse;
 use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL};
 use crate::core::entity::{PayConfig, WechatAccessTokenResponse, WechatPhoneResponse};
 use anyhow::Result;
-use axum::http::StatusCode;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
 use axum::Json;
 use lib_core::key_constants::WECHAT_ACCESS_TOKEN;
@@ -161,7 +162,9 @@ pub async fn user_wechat_pay(
     Ok(response)
 }
 
-pub fn wechat_pay_response() -> impl IntoResponse {
+pub fn wechat_pay_response(req: Request<Body>) -> impl IntoResponse {
+    let body = req.body();
+    println!("{:?}", body);
     let mut res_map = HashMap::new();
     res_map.insert("code", "SUCCESS");
     res_map.insert("message", "成功");
