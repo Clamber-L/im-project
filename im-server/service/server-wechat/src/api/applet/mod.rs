@@ -17,7 +17,7 @@ pub fn applet_api_router() -> Router<AppState> {
         .route("/team", get(user_team))
         .route("/create_team", post(create_team))
         .route("/operation_user_num", get(operation_user_num))
-        .route("/pay", post(pay))
+        .route("/pay", post(create_team_pay))
         .route("/pay_callback", post(pay_callback));
     router
 }

@@ -1,9 +1,8 @@
 use crate::api::applet::entity::WechatLoginByCodeResponse;
 use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL};
-use crate::core::entity::{PayConfig, WechatAccessTokenResponse, WechatPhoneResponse};
+use crate::core::entity::{WechatAccessTokenResponse, WechatPhoneResponse};
 use anyhow::Result;
-use axum::body::Body;
-use axum::http::{Request, StatusCode};
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use lib_core::key_constants::WECHAT_ACCESS_TOKEN;
@@ -11,8 +10,6 @@ use lib_core::{AppError, RedisService};
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Client;
 use std::collections::HashMap;
-use std::fs::read_to_string;
-use wechat_pay_rust_sdk::error::PayError;
 use wechat_pay_rust_sdk::model::{AmountInfo, MicroParams, PayerInfo};
 use wechat_pay_rust_sdk::pay::WechatPay;
 use wechat_pay_rust_sdk::response::MicroResponse;
@@ -120,31 +117,12 @@ pub async fn user_by_code(
 
 /// 微信支付
 pub async fn user_wechat_pay(
-    pay_config: &PayConfig,
+    wechat_pay: &WechatPay,
     description: String,
     order_id: String,
     total_amount: i32,
     open_id: String,
 ) -> Result<MicroResponse, AppError> {
-    let pay_config = pay_config.clone();
-
-    let path = &pay_config.key_path;
-
-    // 读取文件内容为字符串
-    let contents = read_to_string(path);
-    if contents.is_err() {
-        return Err(AppError::WechatPayError(PayError::WeixinNotFound));
-    }
-
-    let contents = contents.unwrap();
-    let wechat_pay = WechatPay::new(
-        &pay_config.app_id,
-        &pay_config.mch_id,
-        &contents,
-        &pay_config.serial_no,
-        &pay_config.v3_key,
-        &pay_config.notify_url,
-    );
     let response = wechat_pay
         .micro_pay(MicroParams {
             description,
@@ -162,9 +140,7 @@ pub async fn user_wechat_pay(
     Ok(response)
 }
 
-pub fn wechat_pay_response(req: Request<Body>) -> impl IntoResponse {
-    let body = req.body();
-    println!("{:?}", body);
+pub fn wechat_pay_response() -> impl IntoResponse {
     let mut res_map = HashMap::new();
     res_map.insert("code", "SUCCESS");
     res_map.insert("message", "成功");

@@ -12,6 +12,7 @@ pub struct Model {
     pub name: String,
     pub end_time: NaiveDate,
     pub be_open: bool,
+    pub amount: String,
     pub created_time: Option<DateTime>,
     pub updated_time: Option<DateTime>,
 }

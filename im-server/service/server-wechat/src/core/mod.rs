@@ -1,8 +1,9 @@
-use crate::core::entity::{AppletConfig, OssConfig, PayConfig, WechatConfig};
+use crate::core::entity::{AppletConfig, OssConfig, WechatConfig};
 use lib_core::RedisService;
 use sea_orm::DatabaseConnection;
 use std::ops::Deref;
 use std::sync::Arc;
+use wechat_pay_rust_sdk::pay::WechatPay;
 
 pub mod constants;
 pub mod entity;
@@ -20,7 +21,7 @@ pub struct AppStateInner {
     pub request_client: reqwest::Client,
     pub mysql_client: DatabaseConnection,
     pub oss_config: OssConfig,
-    pub pay_config: PayConfig,
+    pub wechat_pay: WechatPay,
 }
 
 impl Deref for AppState {
@@ -38,7 +39,7 @@ impl AppState {
         redis_service: RedisService,
         mysql_client: DatabaseConnection,
         oss_config: OssConfig,
-        pay_config: PayConfig,
+        wechat_pay: WechatPay,
     ) -> AppState {
         Self {
             inner: Arc::new(AppStateInner {
@@ -48,7 +49,7 @@ impl AppState {
                 request_client: reqwest::Client::new(),
                 mysql_client,
                 oss_config,
-                pay_config,
+                wechat_pay,
             }),
         }
     }

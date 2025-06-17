@@ -1,6 +1,7 @@
 use anyhow::Result;
 use mongodb::{Client, Database as MongoDB};
 use redis::aio::MultiplexedConnection;
+use redis::RedisError;
 use sea_orm::{Database, DatabaseConnection, DbErr};
 
 pub async fn mongo_client(url: &str, db_name: &str) -> MongoDB {
@@ -13,7 +14,7 @@ pub async fn mysql_client(database_url: &str) -> Result<DatabaseConnection, DbEr
     Database::connect(database_url).await
 }
 
-pub async fn redis_client(redis_url: &str) -> Result<MultiplexedConnection> {
+pub async fn redis_client(redis_url: &str) -> Result<MultiplexedConnection, RedisError> {
     let client = redis::Client::open(redis_url)?;
     let connection = client.get_multiplexed_async_connection().await?;
     Ok(connection)

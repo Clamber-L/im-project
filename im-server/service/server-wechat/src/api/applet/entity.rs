@@ -57,8 +57,8 @@ pub struct OperationUserResponse {
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserPayParam {
-    pub code: String,
-    pub group_buy_id: String,
+    pub operation_id: String,
+    pub team_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]

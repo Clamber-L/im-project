@@ -9,7 +9,13 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: String,
     pub user_id: String,
-    pub group_buy_id: String,
+    pub team_id: String,
+    pub trade_state: String,
+    pub trade_state_desc: String,
+    pub success_time: String,
+    pub open_id: String,
+    pub amount: String,
+    pub order_state: i32,
     pub created_time: Option<DateTime>,
     pub updated_time: Option<DateTime>,
 }

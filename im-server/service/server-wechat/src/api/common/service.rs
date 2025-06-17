@@ -7,7 +7,7 @@ use lib_utils::{error_result, ok_result};
 
 pub async fn upload(State(state): State<AppState>, mut multipart: Multipart) -> ApiResult<String> {
     println!("upload:{:?}", multipart);
-    while let Some(mut field) = multipart.next_field().await? {
+    while let Some(field) = multipart.next_field().await? {
         let original_file_name = field.file_name().unwrap_or("unknown_file").to_string();
         let data = field.bytes().await?;
 

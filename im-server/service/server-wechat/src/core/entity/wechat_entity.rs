@@ -1,5 +1,5 @@
 use sea_orm::sqlx::types::chrono;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct WechatAccessTokenResponse {
@@ -33,7 +33,7 @@ pub struct PhoneInfo {
     pub phone_number: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
 pub struct WechatPayNotifyParam {
     pub id: String,
 
@@ -46,7 +46,7 @@ pub struct WechatPayNotifyParam {
     pub resource: WechatPayNotifyResource,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
 pub struct WechatPayNotifyResource {
     pub original_type: String,
 
