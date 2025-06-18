@@ -58,7 +58,7 @@ pub struct OperationUserResponse {
 #[serde(rename_all = "camelCase")]
 pub struct UserPayParam {
     pub operation_id: String,
-    pub team_id: Option<String>,
+    pub create_team: bool,
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]

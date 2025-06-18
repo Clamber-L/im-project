@@ -1,11 +1,10 @@
-use std::fs::read_to_string;
 use wechat_pay_rust_sdk::pay::{PayNotifyTrait, WechatPay};
 
 fn main() {
     // 初始化支付
-    let wechat_pay = WechatPay::new();
+    let wechat_pay = WechatPay::from_env();
 
-    let  ciphertext ="";
+    let ciphertext = "";
 
     let associated_data = "transaction";
 

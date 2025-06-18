@@ -2,9 +2,6 @@ use crate::api::applet::entity::WechatLoginByCodeResponse;
 use crate::core::constants::{ACCESS_TOKEN_URL, LOGIN_URL, LOGIN_USER_PHONE_URL};
 use crate::core::entity::{WechatAccessTokenResponse, WechatPhoneResponse};
 use anyhow::Result;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::Json;
 use lib_core::key_constants::WECHAT_ACCESS_TOKEN;
 use lib_core::{AppError, RedisService};
 use reqwest::header::CONTENT_TYPE;
@@ -138,11 +135,4 @@ pub async fn user_wechat_pay(
         })
         .await?;
     Ok(response)
-}
-
-pub fn wechat_pay_response() -> impl IntoResponse {
-    let mut res_map = HashMap::new();
-    res_map.insert("code", "SUCCESS");
-    res_map.insert("message", "成功");
-    (StatusCode::OK, Json(res_map))
 }
