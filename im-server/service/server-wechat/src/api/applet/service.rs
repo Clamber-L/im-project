@@ -9,9 +9,8 @@ use crate::core::service::wechat_api::{
     access_token, get_user_phone, user_by_code, user_wechat_pay,
 };
 use crate::core::AppState;
-use axum::body::Body;
 use axum::extract::State;
-use axum::http::{Request, StatusCode};
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use lib_core::{
@@ -30,14 +29,18 @@ use lib_entity::mysql::{
 use lib_utils::request_entity::PageResult;
 use lib_utils::{error_result, ok_result, ok_result_with_none, today_date};
 use sea_orm::prelude::Expr;
+use sea_orm::sea_query::LockType;
 use sea_orm::sqlx::types::chrono::{Local, Utc};
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
-use sha1::digest::typenum::op;
+use sea_orm::{
+    ActiveModelTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
+    TransactionTrait,
+};
 use std::collections::HashMap;
+use std::time::Duration;
+use tokio::time::sleep;
 use tracing::{error, info};
-use wechat_pay_rust_sdk::pay::{PayNotifyTrait, WechatPay};
-use wechat_pay_rust_sdk::response::MicroResponse;
+use wechat_pay_rust_sdk::pay::PayNotifyTrait;
 
 /// 登录
 pub async fn login(
@@ -266,7 +269,7 @@ pub async fn user_team(
         .await?;
     if let Some(operation) = operation_option {
         if Local::now().date_naive() > operation.end_time {
-            return Ok(error_result("本次活动已到期"));
+            return Ok(error_result("本次活动已结束"));
         }
 
         let operation_id = operation.id.clone();
@@ -479,6 +482,8 @@ pub async fn create_team_pay(
         amount: Set(operation.amount.clone()),
         operation_id: Set(operation.id),
         create_team: Set(param.create_team),
+        payed: Set(false),
+        join_team_id: Set(param.join_team_id),
         created_time: Set(Some(Utc::now().naive_local())),
         updated_time: Default::default(),
     }
@@ -517,16 +522,27 @@ pub async fn pay_callback(
         param.resource.associated_data,
     )?;
     info!("data:{:?}", data);
+    println!("out_trade_no:{:?}", &data.out_trade_no);
     // 获取中间支付表信息
+    sleep(Duration::from_secs(2)).await;
     let centre_record_option = AppletPayCentreRecord::find_by_id(&data.out_trade_no)
+        .lock(LockType::Update)
         .one(&state.mysql_client)
         .await?;
+    println!("centre record:{:?}", centre_record_option);
     if centre_record_option.is_some() {
         let centre_record = centre_record_option.unwrap();
+        // 开启事务
+        let txn = state.mysql_client.begin().await?;
+        let mut active_centre_record: applet_pay_centre_record::ActiveModel =
+            centre_record.clone().into();
+        active_centre_record.payed = Set(true);
+        active_centre_record.update(&state.mysql_client).await?;
+
         // 生成订单表
         applet_pay_record::ActiveModel {
             id: Set(generate_snowflake_id()?),
-            user_id: Set(centre_record.user_id),
+            user_id: Set(centre_record.user_id.clone()),
             trade_state: Set(data.trade_state.clone()),
             trade_state_desc: Set(data.trade_state_desc.clone()),
             success_time: Set(data.success_time.clone()),
@@ -536,10 +552,50 @@ pub async fn pay_callback(
             updated_time: Set(Some(Utc::now().naive_local())),
             transaction_id: Set(data.transaction_id.clone()),
             order_state: Set(1),
-            operation_id: Set(centre_record.operation_id),
+            operation_id: Set(centre_record.operation_id.clone()),
         }
         .insert(&state.mysql_client)
         .await?;
+
+        // 判断是否创建团购
+        if centre_record.create_team {
+            // 创建团队
+            let team = applet_operation_team::ActiveModel {
+                id: Set(generate_snowflake_id()?),
+                team_user_id: Set(centre_record.user_id.clone()),
+                operation_id: Set(centre_record.operation_id.clone()),
+                created_time: Set(Some(Utc::now().naive_local())),
+                updated_time: Set(Some(Utc::now().naive_local())),
+            }
+            .insert(&state.mysql_client)
+            .await?;
+            // 加入团队
+            applet_operation_team_user::ActiveModel {
+                id: Set(generate_snowflake_id()?),
+                operation_id: Set(centre_record.operation_id),
+                team_id: Set(team.id),
+                user_id: Set(centre_record.user_id),
+                created_time: Set(Some(Utc::now().naive_local())),
+                updated_time: Set(Some(Utc::now().naive_local())),
+            }
+            .insert(&state.mysql_client)
+            .await?;
+        } else {
+            // 加入团队
+            let join_team_id = centre_record.join_team_id;
+            applet_operation_team_user::ActiveModel {
+                id: Set(generate_snowflake_id()?),
+                operation_id: Set(centre_record.operation_id),
+                team_id: Set(join_team_id),
+                user_id: Set(centre_record.user_id),
+                created_time: Set(Some(Utc::now().naive_local())),
+                updated_time: Set(Some(Utc::now().naive_local())),
+            }
+            .insert(&state.mysql_client)
+            .await?;
+        }
+
+        txn.commit().await?;
     }
 
     let mut res_map = HashMap::new();

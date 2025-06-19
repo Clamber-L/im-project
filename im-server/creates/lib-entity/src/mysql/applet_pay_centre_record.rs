@@ -12,6 +12,8 @@ pub struct Model {
     pub amount: String,
     pub operation_id: String,
     pub create_team: bool,
+    pub payed: bool,
+    pub join_team_id: String,
     pub created_time: Option<DateTime>,
     pub updated_time: Option<DateTime>,
 }

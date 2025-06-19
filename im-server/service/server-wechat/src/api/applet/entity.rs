@@ -59,6 +59,7 @@ pub struct OperationUserResponse {
 pub struct UserPayParam {
     pub operation_id: String,
     pub create_team: bool,
+    pub join_team_id: String,
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
