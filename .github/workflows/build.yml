@@ -21,12 +21,16 @@ jobs:
           override: true
           target: x86_64-unknown-linux-musl
 
-      - name: Install dependencies (zig + cargo-zigbuild)
+      - name: Install dependencies (Zig + cargo-zigbuild)
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
-          curl -L https://github.com/ziglang/zig/releases/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz | tar -xJ
-          sudo mv zig-linux-x86_64-0.11.0/zig /usr/local/bin/
+          
+          ZIG_VERSION=0.11.0
+          curl -LO https://ziglang.org/download/${ZIG_VERSION}/zig-linux-x86_64-${ZIG_VERSION}.tar.xz
+          tar -xf zig-linux-x86_64-${ZIG_VERSION}.tar.xz
+          sudo mv zig-linux-x86_64-${ZIG_VERSION}/zig /usr/local/bin/zig
+
           cargo install cargo-zigbuild
 
       - name: Build server-wechat (static binary for CentOS 7)
