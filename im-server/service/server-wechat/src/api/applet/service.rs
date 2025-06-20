@@ -19,7 +19,7 @@ use lib_core::{
 use lib_entity::mysql::applet_settings::Model;
 use lib_entity::mysql::prelude::{
     AppletOperation, AppletOperationContent, AppletOperationTeam, AppletOperationTeamUser,
-    AppletPayCentreRecord, AppletSettings, AppletUser, AppletUserCreation,
+    AppletPayCentreRecord, AppletPayRecord, AppletSettings, AppletUser, AppletUserCreation,
 };
 use lib_entity::mysql::{
     applet_operation, applet_operation_content, applet_operation_team, applet_operation_team_user,
@@ -462,8 +462,7 @@ pub async fn create_team_pay(
 
     let applet_user = applet_user.unwrap();
 
-    // 判断用户是否在本次活动中支付完成
-    let operation_option = AppletOperation::find_by_id(param.operation_id)
+    let operation_option = AppletOperation::find_by_id(param.operation_id.clone())
         .one(&state.mysql_client)
         .await?;
 
@@ -474,6 +473,18 @@ pub async fn create_team_pay(
         }
         Some(operation) => operation,
     };
+    // 判断用户是否在本次活动中支付完成
+    let pay_record_option = AppletPayRecord::find()
+        .filter(
+            Expr::col(applet_pay_record::Column::OperationId)
+                .eq(param.operation_id)
+                .and(Expr::col(applet_pay_record::Column::UserId).eq(user.id.clone())),
+        )
+        .one(&state.mysql_client)
+        .await?;
+    if pay_record_option.is_some() {
+        return Ok(error_result("不允许重复支付同一次活动!"));
+    }
 
     // 创建支付中间表
     let centre_record = applet_pay_centre_record::ActiveModel {
