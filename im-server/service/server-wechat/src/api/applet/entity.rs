@@ -201,3 +201,9 @@ impl PayResponse {
         }
     }
 }
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UserPayedParam {
+    pub payed_user_id: String,
+}

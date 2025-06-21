@@ -1,4 +1,6 @@
-use super::entity::{OperationUserResponse, PayResponse, TeamResponse, TeamUserResponse};
+use super::entity::{
+    OperationUserResponse, PayResponse, TeamResponse, TeamUserResponse, UserPayedParam,
+};
 use crate::api::applet::entity::{
     AppletLoginParam, AppletSettingParam, CreateTeamParam, OperationResponse,
     OperationUserNumParam, OperationUserNumResponse, UserCreationParam, UserLoginResponse,
@@ -613,4 +615,19 @@ pub async fn pay_callback(
     res_map.insert("code", "SUCCESS");
     res_map.insert("message", "成功");
     Ok((StatusCode::OK, Json(res_map)))
+}
+
+pub async fn user_pay(
+    State(state): State<AppState>,
+    _user: JwtUser,
+    ExtractJson(param): ExtractJson<UserPayedParam>,
+) -> ApiResult<()> {
+    let pay_record_option = AppletPayRecord::find()
+        .filter(Expr::col(applet_pay_record::Column::UserId).eq(param.payed_user_id))
+        .one(&state.mysql_client)
+        .await?;
+    if pay_record_option.is_none() {
+        return Ok(error_result("邀请者未支付，你不能加入他的团队"));
+    }
+    Ok(ok_result_with_none())
 }
