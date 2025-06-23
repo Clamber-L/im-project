@@ -397,7 +397,6 @@ pub async fn create_team(
 /// 团购人数
 pub async fn operation_user_num(
     State(state): State<AppState>,
-    _user: JwtUser,
     ExtractQuery(param): ExtractQuery<OperationUserNumParam>,
 ) -> ApiResult<OperationUserNumResponse> {
     println!("operation_user_num param:{:?}", param);
