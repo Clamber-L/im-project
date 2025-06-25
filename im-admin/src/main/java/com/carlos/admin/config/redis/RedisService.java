@@ -1,5 +1,6 @@
 package com.carlos.admin.config.redis;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+@Getter
 @Component
 public class RedisService {
 
@@ -24,10 +26,6 @@ public class RedisService {
 	public RedisService(RedisTemplate<String, Object> redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
-
-	public RedisTemplate<String, Object> getRedisTemplate() {
-        return this.redisTemplate;
-    }
 
     //-----------------------------redis String----------------------------------------------
 

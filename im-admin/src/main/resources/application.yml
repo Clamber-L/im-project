@@ -8,14 +8,20 @@ spring:
       enabled: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://47.95.179.146:3306/im-project
+    url: jdbc:mysql://192.168.0.25:3300/litemall_veteran
     username: root
-    password: Lsw@0516
+    password: 'SD0535!@#408'
   data:
     redis:
       port: 6379
       host: localhost
       database: 0
+    mongodb:
+      host: 192.168.0.25
+      port: 27017
+      username: root
+      password: 'SD0535!@#408'
+      database: tosaas
   kafka:
     bootstrap-servers: 192.168.0.25:9093
     consumer:
@@ -34,11 +40,15 @@ spring:
       enabled: true
       topic: my_topic-DLT  # 死信队列的主题名称
 mybatis-plus:
-  mapper-locations: classpath:/mappers/**.xml
+  mapper-locations: classpath*:mappers/**/*.xml
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: true
+    resolve-schema-properties: true
+    groups:
+      enabled: true
   swagger-ui:
+    config-url:
     path: /swagger-ui.html
     display-request-duration: true
     groups-order: DESC
@@ -48,4 +58,3 @@ springdoc:
     - group: admin
       paths-to-match: '/**'
       packages-to-scan: com.carlos.admin
-  default-flat-param-object: true

@@ -13,19 +13,17 @@ public class CarlosException extends RuntimeException {
 
 
     private String msg;
-    private int code = 500;
+    private int code = 555;
 
     public CarlosException(String msg, Object... args) {
         this.msg = MessageFormat.format(msg, args);
     }
 
     public CarlosException() {
-        this.code = 555;
         this.msg = "系统内部错误";
     }
 
     public CarlosException(String msg) {
-        this.code = 555;
         this.msg = msg;
     }
 

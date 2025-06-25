@@ -34,22 +34,22 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-		String token = request.getHeader(HEADER_TOKEN);
-
-		if (!StringUtils.hasText(token)) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		UserBean userBean = JwtUtils.verifyTokenAndGetUserBean(token);
-		boolean existsKey = this.redisService.existsKey(RedisConstants.Login_Token + userBean.getUserId());
-		if (!existsKey) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-		SysUser user = this.userMapper.selectById(userBean.getUserId());
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, null);
-		SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+//		String token = request.getHeader(HEADER_TOKEN);
+//
+//		if (!StringUtils.hasText(token)) {
+//			filterChain.doFilter(request, response);
+//			return;
+//		}
+//
+//		UserBean userBean = JwtUtils.verifyTokenAndGetUserBean(token);
+//		boolean existsKey = this.redisService.existsKey(RedisConstants.Login_Token + userBean.getUserId());
+//		if (!existsKey) {
+//			filterChain.doFilter(request, response);
+//			return;
+//		}
+//		SysUser user = this.userMapper.selectById(userBean.getUserId());
+//		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, null);
+//		SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 		filterChain.doFilter(request, response);
 	}
 }

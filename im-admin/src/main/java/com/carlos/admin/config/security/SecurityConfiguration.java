@@ -99,14 +99,14 @@ public class SecurityConfiguration implements AuthenticationManager {
 //		return security.build();
 		return security.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 定义为无状态服务，不会根据服务器session判断登录状态
 				// 配置异常拦截
-				.exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryHandle()))
-				.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST,"/auth/login").anonymous().anyRequest().authenticated()) // 任何请求必须经过认证才允许请求
+//				.exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryHandle()))
+//				.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST,"/auth/login").anonymous().anyRequest().authenticated()) // 任何请求必须经过认证才允许请求
 				// /auth/login 不需要对应的controller，会自动绑定到认证的 authenticate 方法
 //				.formLogin(form -> form.loginProcessingUrl("/auth/login").permitAll().usernameParameter("account").passwordParameter("password"))
 				// 退出配置 清除session信息和认证信息
 //				.logout(logout -> logout.logoutUrl("/auth/logout").invalidateHttpSession(true).clearAuthentication(true))
 				// 设置自定义过滤器 验证token
-				.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
+//				.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
 				.csrf(AbstractHttpConfigurer::disable)
 				// 开启允许跨域请求
 				.cors(Customizer.withDefaults())

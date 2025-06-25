@@ -35,7 +35,6 @@ public class JwtUtils {
             LocalDateTime expireDate = LocalDateTime.now().plusHours(5L);
 
             Instant instant = expireDate.atOffset(ZoneOffset.ofHours(8)).toInstant();
-            System.out.println(Date.from(instant));
 
             map.put("alg", "HS256");
             map.put("typ", "JWT");
