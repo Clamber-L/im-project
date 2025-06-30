@@ -14,6 +14,7 @@ public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void getUser(UserProto.GetUserRequest request, StreamObserver<UserProto.User> responseObserver) {
         long id = request.getId();
+        System.out.println("id:" + id);
         UserProto.User.Builder builder = UserProto.User.newBuilder();
         try {
             UserProto.User response = builder.setId(id).setName("张三").setCreatedAt(LocalDateTime.now().toEpochSecond(ZoneOffset.ofHours(8)))

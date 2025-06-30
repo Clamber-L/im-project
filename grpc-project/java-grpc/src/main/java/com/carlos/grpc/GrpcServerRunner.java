@@ -18,7 +18,7 @@ public class GrpcServerRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Server server = ServerBuilder.forPort(8999).addService(userService).build();
+        Server server = ServerBuilder.forPort(8999).addService(userService).build().start();
         System.out.println("Starting gRPC server on port 8999...");
         server.awaitTermination();
     }
