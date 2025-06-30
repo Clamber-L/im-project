@@ -17,3 +17,12 @@ im-server/service/server-message/app.yml
 im-server/service/server-user/app.yml
 im-server/server-wechat.yml
 im-server/apiclient_key.pem
+
+
+grpc-project/java-grpc/.idea
+grpc-project/java-grpc/target
+
+grpc-project/proto/.idea
+
+grpc-project/rust-grpc/.idea
+grpc-project/rust-grpc/target

@@ -1,0 +1,14 @@
+[package]
+name = "rust-grpc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.97"
+tonic = { version = "0.13.1", features = ["zstd", "default", "router"] }
+prost = "0.14.1"
+serde = { version = "1.0.219", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.13.1"
+anyhow = "1.0.97"

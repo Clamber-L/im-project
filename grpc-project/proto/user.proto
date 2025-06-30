@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package user;
+
+option java_multiple_files = false;
+option java_package = "com.carlos.center.protos.user.proto";
+option java_outer_classname = "UserProto";
+
+message User {
+    uint64 id = 1;
+    string name = 2;
+    string email = 3;
+    uint64 created_at = 4;
+}
+
+message GetUserRequest {
+    uint64 id = 1;
+}
+
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+}
+
+service UserService {
+    rpc GetUser(GetUserRequest) returns (User) {}
+    rpc CreateUser(CreateUserRequest) returns (User) {}
+}
