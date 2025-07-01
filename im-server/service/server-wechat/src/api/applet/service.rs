@@ -105,8 +105,8 @@ pub async fn login(
             let token = generate_jwt(JwtUser { id });
             Ok(ok_result(UserLoginResponse::new(token, user)))
         } else {
-            println!("获取用户信息失败");
-            println!("user_phone_result:{:?}", user_phone_result.unwrap());
+            error!("获取用户信息失败");
+            error!("user_phone_result:{:?}", user_phone_result.unwrap());
             Ok(error_result("获取用户信息失败，请稍后再试"))
         }
     } else {

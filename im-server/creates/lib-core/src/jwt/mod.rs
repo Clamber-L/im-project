@@ -59,12 +59,12 @@ pub fn verification_jwt(token: &str) -> Result<JwtUser> {
         || expire.unwrap() == ""
         || expire.unwrap().parse::<i64>()? <= Utc::now().timestamp()
     {
-        return Err(AppError::InternalServerError.into());
+        return Err(AppError::Unauthorized.into());
     }
 
     if let Some(id) = id {
         Ok(JwtUserBuilder::default().id(id).build()?)
     } else {
-        Err(AppError::InternalServerError.into())
+        Err(AppError::Unauthorized.into())
     }
 }

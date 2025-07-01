@@ -2,7 +2,7 @@ use aliyun_oss_rust_sdk::error::OssError;
 use axum::extract::multipart::MultipartError;
 use axum::extract::rejection::{FormRejection, PathRejection, QueryRejection};
 use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse};
-use lib_utils::{error_result, json_response, HttpResult};
+use lib_utils::{auth_error_result, error_result, json_response, HttpResult};
 use std::num::ParseIntError;
 use thiserror::Error;
 use tracing::error;
@@ -77,7 +77,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         let (status, body): (StatusCode, HttpResult<()>) = match self {
             AppError::NotFound => (StatusCode::NOT_FOUND, error_result("资源没有找到")),
-            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, error_result("没有权限")),
+            AppError::Unauthorized => (StatusCode::OK, auth_error_result("没有权限")),
             AppError::InternalServerError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 error_result("服务器异常，请稍后重试"),

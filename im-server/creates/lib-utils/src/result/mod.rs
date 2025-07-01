@@ -38,6 +38,14 @@ pub fn error_result<T>(message: &str) -> HttpResult<T> {
     }
 }
 
+pub fn auth_error_result<T>(message: &str) -> HttpResult<T> {
+    HttpResult {
+        code: 403,
+        message: message.to_owned(),
+        data: None,
+    }
+}
+
 impl<T> IntoResponse for HttpResult<T>
 where
     T: serde::Serialize,
