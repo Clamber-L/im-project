@@ -7,6 +7,7 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // 读取配置
     let app_config = ApplicationEntity::try_load_yml()?;
 
     // 初始化日志模块
