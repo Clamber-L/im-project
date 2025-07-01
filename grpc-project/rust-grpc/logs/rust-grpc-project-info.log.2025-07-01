@@ -1,0 +1,2 @@
+2025-07-01T05:57:12.274512Z  INFO rust_grpc: starting grpc server
+2025-07-01T05:57:12.285835Z  INFO rust_grpc: 用户信息：Err(Status { code: Unauthenticated, message: "Invalid or missing token", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None })

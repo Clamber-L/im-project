@@ -4,13 +4,19 @@ use std::fs::File;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ApplicationEntity {
-    pub port: String,
+    pub project: ProjectConfig,
     pub wechat: WechatConfig,
     pub applet: AppletConfig,
     pub redis: RedisConfig,
     pub mysql: MysqlConfig,
     pub oss: OssConfig,
     pub pay: PayConfig,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ProjectConfig {
+    pub name: String,
+    pub port: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

@@ -1,9 +1,6 @@
 package com.carlos.grpc.config;
 
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
+import io.grpc.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -16,6 +13,10 @@ public class GrpcAuthInterceptor implements ServerInterceptor {
 		String auth = metadata.get(Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER));
 		System.out.println(auth);
 		if (!StringUtils.hasText(auth)) {
+			serverCall.close(
+					Status.UNAUTHENTICATED.withDescription("Invalid or missing token"),
+					new Metadata()
+			);
 			return new ServerCall.Listener() {}; // return no-op listener
 		}
 

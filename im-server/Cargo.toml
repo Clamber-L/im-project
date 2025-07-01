@@ -82,8 +82,9 @@ prost-build = "0.13.3"
 prost = "0.13.3"
 prost-types = "0.13.3"
 
-# log
+# logger
 tracing = "0.1.40"
+tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 # nacos

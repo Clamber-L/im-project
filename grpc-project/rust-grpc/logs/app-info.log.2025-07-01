@@ -1,0 +1,8 @@
+2025-07-01T02:17:08.792779Z  INFO rust_grpc: starting grpc server
+2025-07-01T02:17:08.811571Z  INFO rust_grpc: 用户信息：Err(Status { code: Unauthenticated, message: "Invalid or missing token", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None })
+2025-07-01T02:17:56.776110Z  INFO rust_grpc: starting grpc server
+2025-07-01T02:17:56.784039Z  INFO rust_grpc: 用户信息：Err(Status { code: Unauthenticated, message: "Invalid or missing token", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None })
+2025-07-01T05:52:48.108569Z  INFO rust_grpc: starting grpc server
+2025-07-01T05:52:48.136768Z  INFO rust_grpc: 用户信息：Err(Status { code: Unauthenticated, message: "Invalid or missing token", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None })
+2025-07-01T05:53:40.673953Z  INFO rust_grpc: starting grpc server
+2025-07-01T05:53:40.682002Z  INFO rust_grpc: 用户信息：Err(Status { code: Unauthenticated, message: "Invalid or missing token", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None })

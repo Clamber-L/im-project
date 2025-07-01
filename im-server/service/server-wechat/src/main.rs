@@ -1,19 +1,18 @@
 use anyhow::Result;
 use axum::serve;
+use lib_core::init_logger;
 use server_wechat::core::entity::ApplicationEntity;
 use server_wechat::init_app;
 use tokio::net::TcpListener;
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, Layer as _};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let layer = Layer::new().with_filter(LevelFilter::INFO);
-    tracing_subscriber::registry().with(layer).init();
-
     let app_config = ApplicationEntity::try_load_yml()?;
 
-    let addr = format!("0.0.0.0:{}", app_config.port);
+    // 初始化日志模块
+    init_logger(app_config.project.name.as_str());
+
+    let addr = format!("0.0.0.0:{}", app_config.project.port);
     let listener = TcpListener::bind(&addr).await?;
 
     let router = init_app(app_config).await?;

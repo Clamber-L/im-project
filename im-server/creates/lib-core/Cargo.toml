@@ -27,3 +27,5 @@ redis = { workspace = true }
 tokio = { workspace = true }
 wechat-pay-rust-sdk = { workspace = true }
 aliyun-oss-rust-sdk = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
