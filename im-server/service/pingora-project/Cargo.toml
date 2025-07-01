@@ -1,0 +1,12 @@
+[package]
+name = "pingora-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lib-core = { workspace = true }
+
+pingora = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }

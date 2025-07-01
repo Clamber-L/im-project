@@ -1,10 +1,13 @@
 use anyhow::Result;
+use bb8::Pool;
 use futures_util::{SinkExt, StreamExt};
+use lib_rpc::client_pool::user_client::UserGrpcManager;
 use tokio::net::TcpListener;
 use tokio::task;
 use tokio_tungstenite::accept_async;
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio_tungstenite::tungstenite::Utf8Bytes;
+use tonic::transport::Endpoint;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -15,10 +18,19 @@ async fn main() -> Result<()> {
     // MQTT 监听端口
     let mqtt_port = 1883;
 
+    // grpc client pool
+    let endpoint = Endpoint::from_static("http://localhost:8999");
+    let manager = UserGrpcManager {
+        endpoint,
+        token: "".to_string(),
+    };
+
+    let pool = Pool::builder().max_size(10).build(manager).await?;
+
     // 创建 Tokio 任务来同时监听多个端口
-    let tcp_listener_task = task::spawn(run_tcp_listener(tcp_port));
-    let websocket_listener_task = task::spawn(run_websocket_listener(websocket_port));
-    let mqtt_listener_task = task::spawn(run_mqtt_listener(mqtt_port));
+    let tcp_listener_task = task::spawn(run_tcp_listener(tcp_port, pool.clone()));
+    let websocket_listener_task = task::spawn(run_websocket_listener(websocket_port, pool.clone()));
+    let mqtt_listener_task = task::spawn(run_mqtt_listener(mqtt_port, pool.clone()));
 
     // 等待所有任务完成
     let _res = tokio::try_join!(
@@ -30,7 +42,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn run_tcp_listener(port: u16) -> Result<()> {
+async fn run_tcp_listener(port: u16, pool: Pool<UserGrpcManager>) -> Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", port)).await?;
     println!("TCP listener running on port {}", port);
 
@@ -61,7 +73,7 @@ async fn run_tcp_listener(port: u16) -> Result<()> {
     }
 }
 
-async fn run_websocket_listener(port: u16) -> Result<()> {
+async fn run_websocket_listener(port: u16, pool: Pool<UserGrpcManager>) -> Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", port)).await?;
     println!("WebSocket listener running on port {}", port);
 
@@ -89,7 +101,7 @@ async fn run_websocket_listener(port: u16) -> Result<()> {
     }
 }
 
-async fn run_mqtt_listener(port: u16) -> Result<()> {
+async fn run_mqtt_listener(port: u16, pool: Pool<UserGrpcManager>) -> Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", port)).await?;
     println!("MQTT listener running on port {}", port);
 

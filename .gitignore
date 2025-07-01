@@ -17,6 +17,7 @@ im-server/service/server-message/app.yml
 im-server/service/server-user/app.yml
 im-server/server-wechat.yml
 im-server/apiclient_key.pem
+im-server/logs/*
 
 
 grpc-project/java-grpc/.idea

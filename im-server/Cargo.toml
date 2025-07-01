@@ -12,6 +12,7 @@ members = [
     "service/rust-cli",
     "service/net-server",
     "service/server-wechat",
+    "service/pingora-project",
 ]
 
 [profile.dev]
@@ -58,7 +59,6 @@ sea-orm = { version = "1.1.1", features = [
     "runtime-tokio-rustls",
     "macros",
 ] }
-ts-bind = "0.1.7"
 
 # async runtime
 tokio = { version = "1.41.1", features = ["rt", "rt-multi-thread", "macros"] }
@@ -78,9 +78,8 @@ redis = { version = "0.25", features = ["tokio-comp", "tokio-native-tls-comp"] }
 tonic-web = "0.12.1"
 tonic-build = "0.12.1"
 tonic = { version = "0.12.1", features = ["zstd", "default", "router"] }
-prost-build = "0.13.3"
 prost = "0.13.3"
-prost-types = "0.13.3"
+bb8 = "0.9.0"
 
 # logger
 tracing = "0.1.40"
@@ -89,6 +88,10 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 # nacos
 nacos-sdk = { version = "0.4.2", features = ["default"] }
+
+# pingora
+async-trait = "0.1.88"
+pingora = { version = "0.4.0", features = ["lb", "openssl"] }
 
 # cli
 clap = { version = "4.5.4", features = ["derive"] }
@@ -122,8 +125,9 @@ sha1 = "0.10.6"
 bytes = "1.9.0"
 argon2 = "0.5.3"
 rand = "0.9.0"
-uuid = { version = "1.17.0", features = ["v4"] }
 
 # ssl
 openssl = { version = "0.10", features = ["vendored"] }
-native-tls = { version = "0.2", features = ["vendored"] }
+
+[patch.crates-io]
+sfv = { git = "https://github.com/undef1nd/sfv.git", tag = "v0.9.4" }
