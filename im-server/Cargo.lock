@@ -4982,6 +4982,12 @@ dependencies = [
 [[package]]
 name = "server-message"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.8.4",
+ "tokio",
+ "tower 0.5.2",
+]
 
 [[package]]
 name = "server-user"
