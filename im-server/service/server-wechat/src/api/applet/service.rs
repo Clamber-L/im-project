@@ -162,7 +162,7 @@ pub async fn creation_list(
 ) -> ApiResult<PageResult<applet_user_creation::Model>> {
     println!("param:{:?}", param);
     let paginate = AppletUserCreation::find()
-        .order_by_asc(applet_user_creation::Column::Id)
+        .order_by_desc(applet_user_creation::Column::Id)
         .paginate(&state.mysql_client, param.page_size);
     let items_and_pages_number = paginate.num_items_and_pages().await?;
 
