@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let app_config = ApplicationEntity::try_load_yml()?;
 
     // 初始化日志模块
-    init_logger(app_config.project.name.as_str());
+    let _guard = init_logger(app_config.project.name.as_str());
 
     let addr = format!("0.0.0.0:{}", app_config.project.port);
     let listener = TcpListener::bind(&addr).await?;
