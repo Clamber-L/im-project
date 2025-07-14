@@ -1,4 +1,5 @@
 use crate::core::entity::{AppletConfig, OssConfig, WechatConfig};
+use aliyun_oss_rust_sdk::oss::OSS;
 use lib_core::RedisService;
 use sea_orm::DatabaseConnection;
 use std::ops::Deref;
@@ -20,7 +21,7 @@ pub struct AppStateInner {
     pub redis_service: RedisService,
     pub request_client: reqwest::Client,
     pub mysql_client: DatabaseConnection,
-    pub oss_config: OssConfig,
+    pub oss: OSS,
     pub wechat_pay: WechatPay,
 }
 
@@ -38,7 +39,7 @@ impl AppState {
         applet_config: AppletConfig,
         redis_service: RedisService,
         mysql_client: DatabaseConnection,
-        oss_config: OssConfig,
+        oss: OSS,
         wechat_pay: WechatPay,
     ) -> AppState {
         Self {
@@ -48,7 +49,7 @@ impl AppState {
                 redis_service,
                 request_client: reqwest::Client::new(),
                 mysql_client,
-                oss_config,
+                oss,
                 wechat_pay,
             }),
         }

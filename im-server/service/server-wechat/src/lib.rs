@@ -3,6 +3,7 @@ use crate::api::auth::wechat_api_router;
 use crate::api::common::common_api_router;
 use crate::core::entity::ApplicationEntity;
 use crate::core::AppState;
+use aliyun_oss_rust_sdk::oss::OSS;
 use anyhow::Result;
 use axum::routing::get;
 use axum::Router;
@@ -36,12 +37,20 @@ pub async fn init_app(application: ApplicationEntity) -> Result<Router, AppError
         &pay_config.notify_url,
     );
 
+    let oss_config = application.oss;
+    let oss = OSS::new(
+        &oss_config.key,
+        &oss_config.secret,
+        &oss_config.end_point,
+        &oss_config.bucket,
+    );
+
     let app_state = AppState::new(
         application.wechat,
         application.applet,
         RedisService::new(redis_client),
         mysql_client,
-        application.oss,
+        oss,
         wechat_pay,
     );
 
