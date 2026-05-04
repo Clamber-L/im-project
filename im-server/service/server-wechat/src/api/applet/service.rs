@@ -1,5 +1,6 @@
 use super::entity::{
-    OperationUserResponse, PayResponse, TeamResponse, TeamUserResponse, UserPayedParam,
+    AppletUserInfoParam, OperationUserResponse, PayResponse, TeamResponse, TeamUserResponse,
+    UserPayedParam,
 };
 use crate::api::applet::entity::{
     AppletLoginParam, AppletSettingParam, CreateTeamParam, OperationResponse,
@@ -116,6 +117,27 @@ pub async fn login(
         });
         Ok(ok_result(UserLoginResponse::new(token, model)))
     }
+}
+
+pub async fn user_info(
+    State(state): State<AppState>,
+    _user: JwtUser,
+    ExtractQuery(param): ExtractQuery<AppletUserInfoParam>,
+) -> ApiResult<TeamUserResponse> {
+    println!("user_id:{:?}", param.user_id);
+    let user_option = AppletUser::find_by_id(param.user_id)
+        .one(&state.mysql_client)
+        .await?;
+    if let None = user_option {
+        return Ok(error_result("用户信息不存在"));
+    }
+    let user_info = user_option.unwrap();
+    let user_info_response = TeamUserResponse {
+        user_id: user_info.id,
+        username: user_info.username,
+        avatar: user_info.avatar,
+    };
+    Ok(ok_result(user_info_response))
 }
 
 /// 修改用户信息

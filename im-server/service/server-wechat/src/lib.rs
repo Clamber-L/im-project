@@ -10,6 +10,7 @@ use axum::Router;
 use lib_core::{mysql_client, redis_client, AppError, RedisService};
 use std::fs::read_to_string;
 use tower_http::cors::{Any, CorsLayer};
+use tracing::info;
 use wechat_pay_rust_sdk::pay::WechatPay;
 
 mod api;
@@ -17,7 +18,9 @@ pub mod core;
 
 pub async fn init_app(application: ApplicationEntity) -> Result<Router, AppError> {
     let redis_client = redis_client(application.redis.url.as_str()).await?;
+    info!("redis client: {:?}", redis_client);
     let mysql_client = mysql_client(application.mysql.url.as_str()).await?;
+    info!("mysql_client: {:?}", mysql_client);
 
     let pay_config = application.pay;
     // 初始化支付

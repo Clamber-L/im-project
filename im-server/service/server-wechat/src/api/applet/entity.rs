@@ -12,6 +12,12 @@ pub struct AppletLoginParam {
 }
 
 #[derive(Debug, Serialize, Default, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AppletUserInfoParam {
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Default, Deserialize, Clone)]
 pub struct WechatLoginByCodeResponse {
     pub session_key: Option<String>,
     pub openid: Option<String>,

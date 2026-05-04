@@ -9,6 +9,7 @@ use axum::Router;
 pub fn applet_api_router() -> Router<AppState> {
     let router = Router::new()
         .route("/login", post(login))
+        .route("/user_info", get(user_info))
         .route("/user", post(update_user))
         .route("/settings", get(settings))
         .route("/creation_list", get(creation_list))

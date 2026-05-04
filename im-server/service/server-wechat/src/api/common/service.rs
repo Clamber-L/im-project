@@ -18,7 +18,7 @@ pub async fn upload(State(state): State<AppState>, mut multipart: Multipart) -> 
         );
 
         let builder = RequestBuilder::new();
-        &state
+        let _resp = &state
             .oss
             .pub_object_from_buffer(
                 format!("applet/{}", original_file_name),

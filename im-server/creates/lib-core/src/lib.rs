@@ -29,7 +29,7 @@ use std::ops::Deref;
 pub type ApiResult<T> = Result<HttpResult<T>, AppError>;
 
 pub fn generate_snowflake_id() -> Result<String, AppError> {
-    let machine_id_fn: &dyn Fn() -> Result<u16, Box<(dyn StdError + Send + Sync + 'static)>> =
+    let machine_id_fn: &dyn Fn() -> Result<u16, Box<dyn StdError + Send + Sync + 'static>> =
         &|| Ok(32u16);
 
     let snowflake = sonyflake::Sonyflake::builder()

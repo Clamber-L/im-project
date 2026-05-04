@@ -1,4 +1,4 @@
-use crate::core::entity::{AppletConfig, OssConfig, WechatConfig};
+use crate::core::entity::{AppletConfig, WechatConfig};
 use aliyun_oss_rust_sdk::oss::OSS;
 use lib_core::RedisService;
 use sea_orm::DatabaseConnection;
