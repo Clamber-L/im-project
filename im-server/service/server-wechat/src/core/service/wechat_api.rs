@@ -119,6 +119,7 @@ pub async fn user_wechat_pay(
     order_id: String,
     total_amount: i32,
     open_id: String,
+    operation_id: String,
 ) -> Result<MicroResponse, AppError> {
     let response = wechat_pay
         .micro_pay(MicroParams {
@@ -128,7 +129,7 @@ pub async fn user_wechat_pay(
                 total: total_amount,
             },
             payer: PayerInfo { openid: open_id },
-            attach: None,
+            attach: Some(operation_id),
             detail: None,
             time_expire: None,
             scene_info: None,

@@ -514,7 +514,7 @@ pub async fn create_team_pay(
         id: Set(generate_snowflake_id()?),
         user_id: Set(user.id.clone()),
         amount: Set(operation.amount.clone()),
-        operation_id: Set(operation.id),
+        operation_id: Set(operation.id.clone()),
         create_team: Set(param.create_team),
         payed: Set(false),
         join_team_id: Set(param.join_team_id),
@@ -531,6 +531,7 @@ pub async fn create_team_pay(
         centre_record.id,
         operation.amount.parse().unwrap(),
         applet_user.clone().open_id,
+        operation.id,
     )
     .await?;
     println!("pay res:{:?}", pay_res);
@@ -557,6 +558,7 @@ pub async fn pay_callback(
     )?;
     info!("data:{:?}", data);
     println!("out_trade_no:{:?}", &data.out_trade_no);
+    info!("data attach:{:?}", data.attach);
     // 获取中间支付表信息
     sleep(Duration::from_secs(2)).await;
     let centre_record_option = AppletPayCentreRecord::find_by_id(&data.out_trade_no)
@@ -645,6 +647,7 @@ pub async fn user_pay(
 ) -> ApiResult<()> {
     let pay_record_option = AppletPayRecord::find()
         .filter(Expr::col(applet_pay_record::Column::UserId).eq(param.payed_user_id))
+        .filter(Expr::col(applet_pay_record::Column::OperationId).eq(param.operation_id))
         .one(&state.mysql_client)
         .await?;
     if pay_record_option.is_none() {

@@ -212,4 +212,5 @@ impl PayResponse {
 #[serde(rename_all = "camelCase")]
 pub struct UserPayedParam {
     pub payed_user_id: String,
+    pub operation_id: String,
 }
