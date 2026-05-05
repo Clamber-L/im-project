@@ -645,6 +645,7 @@ pub async fn user_pay(
     _user: JwtUser,
     ExtractJson(param): ExtractJson<UserPayedParam>,
 ) -> ApiResult<()> {
+    info!("user pay state param:{:?}", param);
     let pay_record_option = AppletPayRecord::find()
         .filter(Expr::col(applet_pay_record::Column::UserId).eq(param.payed_user_id))
         .filter(Expr::col(applet_pay_record::Column::OperationId).eq(param.operation_id))
