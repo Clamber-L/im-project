@@ -383,9 +383,12 @@ pub async fn create_team(
         if Local::now().date_naive() > operation.end_time {
             return Ok(error_result("当前活动已到期，无法参加"));
         }
-        // 判断是否已经加入团队
+        // 判断是否已经加入过本次活动的团队
         let team_user_option = AppletOperationTeamUser::find()
             .filter(Expr::col(applet_operation_team_user::Column::UserId).eq(user.id.clone()))
+            .filter(
+                Expr::col(applet_operation_team_user::Column::OperationId).eq(operation.id.clone()),
+            )
             .one(&state.mysql_client)
             .await?;
         if team_user_option.is_some() {
@@ -643,7 +646,7 @@ pub async fn pay_callback(
 pub async fn user_pay(
     State(state): State<AppState>,
     _user: JwtUser,
-    ExtractJson(param): ExtractJson<UserPayedParam>,
+    ExtractQuery(param): ExtractQuery<UserPayedParam>,
 ) -> ApiResult<()> {
     info!("user pay state param:{:?}", param);
     let pay_record_option = AppletPayRecord::find()
